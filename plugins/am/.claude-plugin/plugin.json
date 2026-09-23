@@ -1,0 +1,15 @@
+{
+  "name": "am",
+  "version": "0.1.0",
+  "description": "Domain modelling skills: a glossary and ADRs kept in .about/.",
+  "author": {
+    "name": "Andrew Molyuk",
+    "email": "andrew@molyuk.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "glossary",
+    "adr",
+    "domain-modeling"
+  ]
+}

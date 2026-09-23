@@ -1,0 +1,17 @@
+{
+  "name": "harness",
+  "owner": {
+    "name": "Andrew Molyuk",
+    "email": "andrew@molyuk.com"
+  },
+  "metadata": {
+    "description": "Claude Code plugins reused across projects."
+  },
+  "plugins": [
+    {
+      "name": "am",
+      "source": "./plugins/am",
+      "description": "Domain modelling skills: a glossary and ADRs kept in .about/."
+    }
+  ]
+}
