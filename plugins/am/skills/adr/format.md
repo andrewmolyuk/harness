@@ -7,11 +7,13 @@ keep the project's numbering style if it already has one.
 # {Short decision title}
 
 Status: proposed | accepted | superseded by 0007
+Date: YYYY-MM-DD
 
 {1–3 sentences: the context, what was decided, and why.}
 ```
 
-That is often enough. Add a section only when it earns its place:
+`Date` is when the status last changed. That is often enough. Add a section only when it
+earns its place:
 
 - **Considered options** — rejected alternatives worth remembering; only ones actually discussed.
 - **Consequences** — non-obvious effects, including the downsides knowingly accepted.

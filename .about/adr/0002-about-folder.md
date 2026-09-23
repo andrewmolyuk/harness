@@ -1,6 +1,7 @@
 # Project knowledge lives in `.about/`
 
 Status: accepted
+Date: 2026-09-23
 
 The skills keep a project's glossary and ADRs in `.about/glossary.md` and `.about/adr/`. This is
 project knowledge for people and for any agent, so it belongs neither in one vendor's config

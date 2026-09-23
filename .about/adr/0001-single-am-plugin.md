@@ -1,6 +1,7 @@
 # One `am` plugin, addressed by its namespace
 
 Status: accepted
+Date: 2026-09-23
 
 All shared skills ship in a single plugin, `am`, from the `harness` marketplace, and are called
 as `/am:<skill>` or just `/<skill>` when the name is unique. A short namespace keeps autocomplete
