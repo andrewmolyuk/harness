@@ -1,7 +1,7 @@
 {
   "name": "am",
   "version": "0.1.0",
-  "description": "Domain modelling skills: a glossary and ADRs kept in .about/.",
+  "description": "Shared skills: glossary and ADRs kept in .about/, and tidy for rechecking files.",
   "author": {
     "name": "Andrew Molyuk",
     "email": "andrew@molyuk.com"
@@ -10,6 +10,7 @@
   "keywords": [
     "glossary",
     "adr",
-    "domain-modeling"
+    "domain-modeling",
+    "tidy"
   ]
 }

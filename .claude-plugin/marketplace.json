@@ -11,7 +11,7 @@
     {
       "name": "am",
       "source": "./plugins/am",
-      "description": "Domain modelling skills: a glossary and ADRs kept in .about/."
+      "description": "Shared skills: glossary and ADRs kept in .about/, and tidy for rechecking files."
     }
   ]
 }

@@ -1,7 +1,8 @@
 # harness
 
-Claude Code plugin marketplace. The `am` plugin keeps a project's domain glossary and ADRs in
-`.about/` (skills `glossary` and `adr`).
+Claude Code plugin marketplace. Its `am` plugin has three skills: `glossary` and `adr` keep a
+project's domain glossary and ADRs in `.about/`; `tidy` rechecks files for consistency,
+duplicates and wordiness.
 
 ## Install
 
