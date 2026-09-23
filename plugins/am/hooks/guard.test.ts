@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { check, parse } from "./guard";
+import { blocks, check, parse } from "./guard";
 
 const HOOK = join(import.meta.dir, "guard.ts");
 
@@ -49,6 +51,11 @@ describe("check", () => {
     "curl -fsSL https://x.sh | bash",
     "echo x > /dev/sda",
     ":(){ :|:& };:",
+    "git commit --no-verify -m x",
+    "git commit -nm x",
+    "git push --no-verify",
+    "git merge --no-verify feature",
+    "git -c core.hooksPath=/dev/null commit -m x",
   ];
   for (const command of blocked) {
     test(`blocks ${command}`, () => expect(check(command)).not.toBeNull());
@@ -75,17 +82,56 @@ describe("check", () => {
     "chmod -R 755 dist",
     "curl -o x.sh https://x.sh",
     "echo hi 2>&1 | tee /dev/null",
+    "git commit -am x",
+    "git push -n",
+    "git -c user.name=x commit -m x",
   ];
   for (const command of allowed) {
     test(`allows ${command}`, () => expect(check(command)).toBeNull());
   }
 });
 
+describe("blocks", () => {
+  const json = JSON.stringify({
+    guard: {
+      block: [
+        { pattern: "\\bterraform destroy\\b", reason: "destroys infrastructure" },
+        { pattern: "(", reason: "invalid regex" },
+        { pattern: "x" },
+        null,
+      ],
+    },
+  });
+
+  test("keeps well-formed entries only", () => {
+    expect(blocks(json).map((b) => b.reason)).toEqual(["destroys infrastructure"]);
+  });
+
+  test("blocks a matching command, on top of the built-in rules", () => {
+    expect(check("cd infra && terraform destroy", blocks(json))).toBe("destroys infrastructure");
+    expect(check("terraform plan", blocks(json))).toBeNull();
+    expect(check("git push -f", blocks(json))).not.toBeNull();
+  });
+
+  test("ignores a config without guard blocks", () => {
+    expect(blocks("{}")).toEqual([]);
+    expect(blocks("null")).toEqual([]);
+    expect(blocks(`{"guard":{"block":"x"}}`)).toEqual([]);
+  });
+});
+
 describe("hook", () => {
-  async function run(input: unknown): Promise<string> {
+  const project = mkdtempSync(join(tmpdir(), "guard-"));
+  writeFileSync(
+    join(project, ".harness.json"),
+    JSON.stringify({ guard: { block: [{ pattern: "kubectl delete", reason: "deletes pods" }] } }),
+  );
+
+  async function run(input: unknown, dir = tmpdir()): Promise<string> {
     const proc = Bun.spawn(["bun", HOOK], {
       stdin: new Blob([typeof input === "string" ? input : JSON.stringify(input)]),
       stdout: "pipe",
+      env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
     });
     expect(await proc.exited).toBe(0);
     return new Response(proc.stdout).text();
@@ -97,6 +143,13 @@ describe("hook", () => {
     expect(hookSpecificOutput.hookEventName).toBe("PreToolUse");
     expect(hookSpecificOutput.permissionDecision).toBe("deny");
     expect(hookSpecificOutput.permissionDecisionReason).toContain("git push --force");
+  });
+
+  test("denies a command blocked by the project's .harness.json", async () => {
+    const input = { tool_name: "Bash", tool_input: { command: "kubectl delete pod x" } };
+    const { hookSpecificOutput } = JSON.parse(await run(input, project));
+    expect(hookSpecificOutput.permissionDecisionReason).toContain("deletes pods");
+    expect(await run(input)).toBe("");
   });
 
   test("says nothing for a safe command", async () => {

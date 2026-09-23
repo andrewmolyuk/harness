@@ -1,6 +1,11 @@
 // PreToolUse hook on Bash: deny git and shell commands that destroy work or data and can't be
-// undone. Claude is told why and to leave the command to the user. Unusable input is allowed.
-type Input = { tool_name?: string; tool_input?: { command?: string } };
+// undone, or that skip the git hooks. Claude is told why and to leave the command to the user.
+// A project's .harness.json can add blocks, never lift one. Unusable input is allowed.
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+type Input = { cwd?: string; tool_name?: string; tool_input?: { command?: string } };
+export type Block = { pattern: RegExp; reason: string };
 
 const WRAPPERS = new Set(["sudo", "doas", "env", "command", "exec", "nohup", "time", "xargs"]);
 const SHELLS = new Set(["sh", "bash", "zsh", "dash"]);
@@ -52,11 +57,20 @@ function has(args: string[], ...flags: string[]): boolean {
 
 function git(args: string[]): string | null {
   // Skip global options: -C <path>, -c <key=value>, --git-dir=…
-  while (args[0]?.startsWith("-")) args = args.slice(args[0] === "-C" || args[0] === "-c" ? 2 : 1);
+  while (args[0]?.startsWith("-")) {
+    if (args[0] === "-c" && /^core\.hookspath=/i.test(args[1] ?? ""))
+      return "git -c core.hooksPath=… skips the git hooks";
+    args = args.slice(args[0] === "-C" || args[0] === "-c" ? 2 : 1);
+  }
   const [sub, ...rest] = args;
   const paths = rest.filter((a) => !a.startsWith("-"));
   switch (sub) {
+    case "commit":
+      return has(rest, "--no-verify", "-n") ? "git commit --no-verify skips the git hooks" : null;
+    case "merge":
+      return has(rest, "--no-verify") ? "git merge --no-verify skips the git hooks" : null;
     case "push":
+      if (has(rest, "--no-verify")) return "git push --no-verify skips the git hooks";
       if (has(rest, "--force", "-f", "--mirror") || rest.some((a) => a.startsWith("+")))
         return "git push --force rewrites remote history; --force-with-lease is allowed";
       if (has(rest, "--delete", "-d") || paths.some((a) => a.startsWith(":")))
@@ -120,8 +134,32 @@ function program(name: string, args: string[]): string | null {
   }
 }
 
+// The project's extra blocks: `{ "guard": { "block": [{ "pattern", "reason" }] } }`, each
+// pattern a regex on the command text. Malformed entries are skipped.
+export function blocks(json: string): Block[] {
+  const list = (JSON.parse(json) as { guard?: { block?: unknown } } | null)?.guard?.block;
+  if (!Array.isArray(list)) return [];
+  return list.flatMap((b: { pattern?: unknown; reason?: unknown } | null) => {
+    if (typeof b?.pattern !== "string" || typeof b.reason !== "string") return [];
+    try {
+      return [{ pattern: new RegExp(b.pattern), reason: b.reason }];
+    } catch {
+      return [];
+    }
+  });
+}
+
+function projectBlocks(dir: string | undefined): Block[] {
+  try {
+    return dir ? blocks(readFileSync(join(dir, ".harness.json"), "utf8")) : [];
+  } catch {
+    return [];
+  }
+}
+
 // Why the command is dangerous, or null when it isn't.
-export function check(command: string): string | null {
+export function check(command: string, extra: Block[] = []): string | null {
+  for (const { pattern, reason } of extra) if (pattern.test(command)) return reason;
   if (/:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:/.test(command)) return "fork bomb";
   if (/\b(curl|wget)\b[^|;&]*\|\s*(sudo\s+)?(ba|z|da)?sh\b/.test(command))
     return "piping a download into a shell runs unreviewed code";
@@ -145,9 +183,9 @@ export function check(command: string): string | null {
 }
 
 async function main() {
-  const { tool_name, tool_input } = (await Bun.stdin.json()) as Input;
+  const { cwd, tool_name, tool_input } = (await Bun.stdin.json()) as Input;
   if (tool_name !== "Bash" || !tool_input?.command) return;
-  const reason = check(tool_input.command);
+  const reason = check(tool_input.command, projectBlocks(process.env.CLAUDE_PROJECT_DIR ?? cwd));
   if (!reason) return;
   const hookSpecificOutput = {
     hookEventName: "PreToolUse",

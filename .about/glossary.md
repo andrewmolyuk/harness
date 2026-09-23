@@ -35,6 +35,13 @@ A word dropped because the concept it named doesn't exist.
 **Unresolved item**:
 A contested name or a case the glossary can't answer yet, listed with what would settle it.
 
+## Configuration
+
+**Harness config**:
+The project's `.harness.json`: its settings for the `am` hooks, such as extra commands for the
+guard to block.
+_Avoid_: harness file, settings
+
 ## Decisions
 
 **Decision**:

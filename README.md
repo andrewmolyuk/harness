@@ -5,7 +5,14 @@ project's domain glossary and ADRs in `.about/`; `tidy` rechecks files for consi
 duplicates and wordiness. In a project that already has `.about/`, a session-end hook reviews
 each finished conversation with `glossary` and `adr` in the background. In every project, a
 guard hook blocks destructive git and shell commands (`git push --force`, `git reset --hard`,
-`rm -rf /`…) and leaves them to the user. Both hooks need `bun`.
+`rm -rf /`…) and commands that skip git hooks (`--no-verify`), and leaves them to the user.
+Both hooks need `bun`.
+
+A project can block more commands in `.harness.json`; it can't unblock the built-in ones:
+
+```json
+{ "guard": { "block": [{ "pattern": "\\bterraform destroy\\b", "reason": "destroys infra" }] } }
+```
 
 ## Install
 
