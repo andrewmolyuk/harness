@@ -9,7 +9,7 @@ folder nor in a folder other tools already claim; `.about` is short, unclaimed, 
 
 ## Considered options
 
-- `docs/` — mixes the model with general documentation.
+- `docs/` — mixes the glossary and ADRs with general documentation.
 - `.claude/` — Claude Code's own configuration; ties the knowledge to one tool.
 - `.agents/` — neutral, but shared with Codex, Copilot and others, which claim parts of it.
 - `.kb`, `.knowledge` — fine, but don't sort first.

@@ -6,15 +6,15 @@ glossary of terms and a log of ADRs.
 ## Glossary
 
 **Term**:
-A word the project agrees to use for exactly one concept within its Context.
-_Avoid_: name, word
+A word the project agrees to use for exactly one concept within its Context; until agreed,
+it is just a word in play.
 
 **Entry**:
 A Term's record in the glossary: its definition, plus the words to avoid and optional trailers.
 
 **Context**:
 A part of the system with its own vocabulary, where the same Term can mean something else.
-_Avoid_: module, domain; "context" for the model's context window
+_Avoid_: module, domain; "context" for an agent's context window
 
 **Topic**:
 A group of related Entries under one subheading.

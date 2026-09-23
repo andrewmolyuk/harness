@@ -61,4 +61,4 @@ Write an ADR only when all three hold — otherwise the conversation is the reco
   too) and mark it `accepted`.
 - Once `accepted`, an ADR is immutable. A changed decision is a new ADR that supersedes the old
   one; in the old one, change only its status.
-- Tell the user in one line what you wrote.
+- Tell the user in one line what changed.

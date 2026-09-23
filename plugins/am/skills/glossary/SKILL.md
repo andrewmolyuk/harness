@@ -16,7 +16,7 @@ about; ask if unclear. The project's own conventions win over these defaults.
 ## Check
 
 Call out a clash with the glossary at once: "The glossary says Filter — you said rule. Same
-thing, or new?" If the topic touches an entry in `## Unresolved`, settle it now.
+thing, or new?" If the topic touches an item in `## Unresolved`, settle it now.
 
 ## Probe
 
