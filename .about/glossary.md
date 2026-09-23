@@ -47,6 +47,11 @@ A script git runs at a point in its own workflow (`pre-commit`, `commit-msg`, `p
 for every commit or push, whether or not Claude made it.
 _Avoid_: "hook" alone, which here means a Claude Code hook
 
+**Guard**:
+The `am` plugin's Claude Code hook that denies a destructive or hook-skipping command before
+Claude runs it and leaves it to the user; the Harness config can add blocks, never lift one.
+_Avoid_: blocker, firewall
+
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
 Harness config.
@@ -63,11 +68,12 @@ and a real trade-off.
 _Avoid_: decision record, design doc
 
 **Status**:
-An ADR's stage: proposed (still open, editable), accepted (decided, immutable) or superseded
-(replaced by a later ADR).
+An ADR's stage: proposed (still open, editable), accepted (decided; immutable once committed)
+or superseded (replaced by a later ADR).
 
 **Supersede**:
-To replace an accepted ADR with a new one; the old one changes only its Status.
+To replace an accepted ADR with a new one; the old one changes only its Status, and the Date
+with it.
 
 ## Probing
 
