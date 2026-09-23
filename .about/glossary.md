@@ -38,8 +38,8 @@ A contested name or a case the glossary can't answer yet, listed with what would
 ## Configuration
 
 **Harness config**:
-The project's `.harness.json`: its settings for the `am` hooks, such as extra commands for the
-guard to block.
+The project's `.harness.json`: its settings for the `am` hooks — extra commands for the guard
+to block, and the Git hooks to generate.
 _Avoid_: harness file, settings
 
 **Git hook**:
@@ -50,7 +50,6 @@ _Avoid_: "hook" alone, which here means a Claude Code hook
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
 Harness config.
-_Planned_: none shipped yet
 
 ## Decisions
 

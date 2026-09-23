@@ -1,0 +1,8 @@
+{
+  "$schema": "https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json",
+  "gitHooks": {
+    "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
+    "pre-commit": ["bun run check"],
+    "pre-push": ["am:linear-history"]
+  }
+}

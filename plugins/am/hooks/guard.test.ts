@@ -92,7 +92,7 @@ describe("check", () => {
 });
 
 describe("blocks", () => {
-  const json = JSON.stringify({
+  const config = {
     guard: {
       block: [
         { pattern: "\\bterraform destroy\\b", reason: "destroys infrastructure" },
@@ -101,22 +101,22 @@ describe("blocks", () => {
         null,
       ],
     },
-  });
+  };
 
   test("keeps well-formed entries only", () => {
-    expect(blocks(json).map((b) => b.reason)).toEqual(["destroys infrastructure"]);
+    expect(blocks(config).map((b) => b.reason)).toEqual(["destroys infrastructure"]);
   });
 
   test("blocks a matching command, on top of the built-in rules", () => {
-    expect(check("cd infra && terraform destroy", blocks(json))).toBe("destroys infrastructure");
-    expect(check("terraform plan", blocks(json))).toBeNull();
-    expect(check("git push -f", blocks(json))).not.toBeNull();
+    expect(check("cd infra && terraform destroy", blocks(config))).toBe("destroys infrastructure");
+    expect(check("terraform plan", blocks(config))).toBeNull();
+    expect(check("git push -f", blocks(config))).not.toBeNull();
   });
 
   test("ignores a config without guard blocks", () => {
-    expect(blocks("{}")).toEqual([]);
-    expect(blocks("null")).toEqual([]);
-    expect(blocks(`{"guard":{"block":"x"}}`)).toEqual([]);
+    expect(blocks({})).toEqual([]);
+    expect(blocks(null)).toEqual([]);
+    expect(blocks({ guard: { block: "x" } })).toEqual([]);
   });
 });
 

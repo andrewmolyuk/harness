@@ -5,14 +5,27 @@ project's domain glossary and ADRs in `.about/`; `tidy` rechecks files for consi
 duplicates and wordiness. In a project that already has `.about/`, a session-end hook reviews
 each finished conversation with `glossary` and `adr` in the background. In every project, a
 guard hook blocks destructive git and shell commands (`git push --force`, `git reset --hard`,
-`rm -rf /`…) and commands that skip git hooks (`--no-verify`), and leaves them to the user.
-Both hooks need `bun`.
+`rm -rf /`…) and commands that skip Git hooks (`--no-verify`), and leaves them to the user.
+In a project with `.harness.json`, a session-start hook generates the Git hooks it lists. All
+hooks need `bun`.
 
-A project can block more commands in `.harness.json`; it can't unblock the built-in ones:
+`.harness.json` configures both. The guard can block more commands but never fewer; each Git
+hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails:
 
 ```json
-{ "guard": { "block": [{ "pattern": "\\bterraform destroy\\b", "reason": "destroys infra" }] } }
+{
+  "guard": { "block": [{ "pattern": "\\bterraform destroy\\b", "reason": "destroys infra" }] },
+  "gitHooks": {
+    "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
+    "pre-commit": ["bun run check"],
+    "pre-push": ["am:linear-history"]
+  }
+}
 ```
+
+The Git hooks go into `.git/hooks`, marked as the plugin's own; a hook already there is left
+alone. `am:linear-history` also sets `pull.rebase=true`. For editor checks, set `$schema` to
+`https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`.
 
 ## Install
 

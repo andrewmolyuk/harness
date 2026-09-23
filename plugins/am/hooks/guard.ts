@@ -1,8 +1,7 @@
 // PreToolUse hook on Bash: deny git and shell commands that destroy work or data and can't be
 // undone, or that skip the git hooks. Claude is told why and to leave the command to the user.
 // A project's .harness.json can add blocks, never lift one. Unusable input is allowed.
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { type Config, load } from "../lib/config";
 
 type Input = { cwd?: string; tool_name?: string; tool_input?: { command?: string } };
 export type Block = { pattern: RegExp; reason: string };
@@ -136,8 +135,8 @@ function program(name: string, args: string[]): string | null {
 
 // The project's extra blocks: `{ "guard": { "block": [{ "pattern", "reason" }] } }`, each
 // pattern a regex on the command text. Malformed entries are skipped.
-export function blocks(json: string): Block[] {
-  const list = (JSON.parse(json) as { guard?: { block?: unknown } } | null)?.guard?.block;
+export function blocks(config: Config | null): Block[] {
+  const list = (config?.guard as { block?: unknown } | undefined)?.block;
   if (!Array.isArray(list)) return [];
   return list.flatMap((b: { pattern?: unknown; reason?: unknown } | null) => {
     if (typeof b?.pattern !== "string" || typeof b.reason !== "string") return [];
@@ -151,7 +150,7 @@ export function blocks(json: string): Block[] {
 
 function projectBlocks(dir: string | undefined): Block[] {
   try {
-    return dir ? blocks(readFileSync(join(dir, ".harness.json"), "utf8")) : [];
+    return dir ? blocks(load(dir)) : [];
   } catch {
     return [];
   }
