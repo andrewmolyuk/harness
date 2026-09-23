@@ -1,5 +1,5 @@
 // PreToolUse hook on Bash: deny git and shell commands that destroy work or data and can't be
-// undone, or that skip the git hooks. Claude is told why and to leave the command to the user.
+// undone, or that skip the Git hooks. Claude is told why and to leave the command to the user.
 // A project's .harness.json can add blocks, never lift one. Unusable input is allowed.
 import { type Config, load } from "../lib/config";
 
@@ -58,18 +58,18 @@ function git(args: string[]): string | null {
   // Skip global options: -C <path>, -c <key=value>, --git-dir=…
   while (args[0]?.startsWith("-")) {
     if (args[0] === "-c" && /^core\.hookspath=/i.test(args[1] ?? ""))
-      return "git -c core.hooksPath=… skips the git hooks";
+      return "git -c core.hooksPath=… skips the Git hooks";
     args = args.slice(args[0] === "-C" || args[0] === "-c" ? 2 : 1);
   }
   const [sub, ...rest] = args;
   const paths = rest.filter((a) => !a.startsWith("-"));
   switch (sub) {
     case "commit":
-      return has(rest, "--no-verify", "-n") ? "git commit --no-verify skips the git hooks" : null;
+      return has(rest, "--no-verify", "-n") ? "git commit --no-verify skips the Git hooks" : null;
     case "merge":
-      return has(rest, "--no-verify") ? "git merge --no-verify skips the git hooks" : null;
+      return has(rest, "--no-verify") ? "git merge --no-verify skips the Git hooks" : null;
     case "push":
-      if (has(rest, "--no-verify")) return "git push --no-verify skips the git hooks";
+      if (has(rest, "--no-verify")) return "git push --no-verify skips the Git hooks";
       if (has(rest, "--force", "-f", "--mirror") || rest.some((a) => a.startsWith("+")))
         return "git push --force rewrites remote history; --force-with-lease is allowed";
       if (has(rest, "--delete", "-d") || paths.some((a) => a.startsWith(":")))

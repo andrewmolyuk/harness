@@ -2,7 +2,7 @@
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
 files consistent (a glossary of terms, a log of ADRs, a tidy-up check, a review of each finished
-session) and guard it against destructive commands.
+session), generate its Git hooks, and guard it against destructive commands.
 
 ## Glossary
 
