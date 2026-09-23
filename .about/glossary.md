@@ -1,8 +1,8 @@
 # harness glossary
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
-files consistent (a glossary of terms, a log of ADRs, a tidy-up check, a review of each finished
-session), generate its Git hooks, and guard it against destructive commands.
+files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), sync
+its Git hooks, and guard it against destructive commands.
 
 ## Glossary
 
@@ -49,12 +49,24 @@ _Avoid_: "hook" alone, which here means a Claude Code hook
 
 **Guard**:
 The `am` plugin's Claude Code hook that denies a destructive or hook-skipping command before
-Claude runs it and leaves it to the user; the Harness config can add blocks, never lift one.
+Claude runs it and leaves it to the user; the Harness config can add blocks to its built-in
+rules, never lift one.
 _Avoid_: blocker, firewall
+
+**Sync**:
+The `am` plugin's Claude Code hook that, at session start, brings a repo's Git hooks in line
+with the Harness config.
+_In code_: `git-hooks.ts`
+
+**Session review**:
+The `am` plugin's Claude Code hook that, when a session ends in a project with `.about/`, has a
+separate headless session record in the glossary and ADRs what the conversation settled.
+_Avoid_: session-end review
 
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
 Harness config.
+_Avoid_: "check" for one of the Guard's built-in rules
 
 ## Decisions
 
@@ -68,12 +80,17 @@ and a real trade-off.
 _Avoid_: decision record, design doc
 
 **Status**:
-An ADR's stage: proposed (still open, editable), accepted (decided; immutable but for a typo
-fixed within an hour and before it's committed) or superseded (replaced by a later ADR).
+An ADR's stage: proposed (still open, editable), accepted (decided; immutable but for a Typo
+fixed in the session that wrote it, resumed or not, before it's committed) or superseded
+(replaced by a later ADR).
 
 **Supersede**:
 To replace an accepted ADR with a new one; the old one changes only its Status, and the Date
 with it.
+
+**Typo**:
+A slip that keeps an ADR from saying what its author meant (spelling, punctuation, formatting,
+a wrong reference); fixing one never changes what was decided.
 
 ## Probing
 

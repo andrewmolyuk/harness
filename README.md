@@ -2,12 +2,12 @@
 
 Claude Code plugin marketplace. Its `am` plugin has three skills: `glossary` and `adr` keep a
 project's domain glossary and ADRs in `.about/`; `tidy` rechecks files for consistency,
-duplicates and wordiness. In a project that already has `.about/`, a session-end hook reviews
-each finished conversation with `glossary` and `adr` in the background. In every project, a
-guard hook blocks destructive git and shell commands (`git push --force`, `git reset --hard`,
-`rm -rf /`…) and commands that skip Git hooks (`--no-verify`), and leaves them to the user.
-In a project with `.harness.json`, a session-start hook generates the Git hooks it lists. All
-hooks need `bun`.
+duplicates and wordiness. In a project that already has `.about/`, the session review hook
+records what each finished conversation settled, with `glossary` and `adr` in the background.
+In every project, the guard hook blocks destructive git and shell commands (`git push --force`,
+`git reset --hard`, `rm -rf /`…) and commands that skip Git hooks (`--no-verify`), and leaves
+them to the user. In a project with `.harness.json`, the sync hook generates the Git hooks it
+lists at session start. All hooks need `bun`.
 
 `.harness.json` configures both. The guard can block more commands but never fewer; each Git
 hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails:
