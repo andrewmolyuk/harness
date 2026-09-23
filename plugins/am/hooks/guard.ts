@@ -1,0 +1,161 @@
+// PreToolUse hook on Bash: deny git and shell commands that destroy work or data and can't be
+// undone. Claude is told why and to leave the command to the user. Unusable input is allowed.
+type Input = { tool_name?: string; tool_input?: { command?: string } };
+
+const WRAPPERS = new Set(["sudo", "doas", "env", "command", "exec", "nohup", "time", "xargs"]);
+const SHELLS = new Set(["sh", "bash", "zsh", "dash"]);
+const ROOTS = new Set(["/", "/*", "~", "~/", "~/*", "$HOME", "${HOME}", "$HOME/*", ".", "./",
+  "./*", "..", "../", "*"]);
+
+// Commands split on ; & | ( ) ` and newlines, words unquoted; enough to find each program and
+// its arguments, not a full shell parser.
+export function parse(command: string): string[][] {
+  const cmds: string[][] = [[]];
+  let word: string | null = null;
+  let quote = "";
+  const flush = () => {
+    if (word !== null) cmds.at(-1)!.push(word);
+    word = null;
+  };
+  for (let i = 0; i < command.length; i++) {
+    const c = command[i]!;
+    if (quote) {
+      if (c === quote) quote = "";
+      else if (c === "\\" && quote === '"' && i + 1 < command.length) word += command[++i];
+      else word += c;
+    } else if (c === '"' || c === "'") {
+      quote = c;
+      word ??= "";
+    } else if (c === "\\" && i + 1 < command.length) {
+      word = (word ?? "") + command[++i];
+    } else if (";&|()`\n".includes(c)) {
+      flush();
+      cmds.push([]);
+    } else if (/\s/.test(c)) {
+      flush();
+    } else {
+      word = (word ?? "") + c;
+    }
+  }
+  flush();
+  return cmds.filter((c) => c.length > 0);
+}
+
+// `-f` also matches combined short flags such as `-fd`.
+function has(args: string[], ...flags: string[]): boolean {
+  return args.some(
+    (a) =>
+      flags.includes(a) ||
+      flags.some((f) => /^-[a-zA-Z]$/.test(f) && /^-[a-zA-Z]+$/.test(a) && a.includes(f[1]!)),
+  );
+}
+
+function git(args: string[]): string | null {
+  // Skip global options: -C <path>, -c <key=value>, --git-dir=…
+  while (args[0]?.startsWith("-")) args = args.slice(args[0] === "-C" || args[0] === "-c" ? 2 : 1);
+  const [sub, ...rest] = args;
+  const paths = rest.filter((a) => !a.startsWith("-"));
+  switch (sub) {
+    case "push":
+      if (has(rest, "--force", "-f", "--mirror") || rest.some((a) => a.startsWith("+")))
+        return "git push --force rewrites remote history; --force-with-lease is allowed";
+      if (has(rest, "--delete", "-d") || paths.some((a) => a.startsWith(":")))
+        return "git push --delete removes a remote branch";
+      return null;
+    case "reset":
+      return has(rest, "--hard", "--merge", "--keep") ? "git reset --hard discards changes" : null;
+    case "clean":
+      return has(rest, "--force", "-f") ? "git clean -f deletes untracked files" : null;
+    case "checkout":
+      return has(rest, "--force", "-f") || paths.includes(".")
+        ? "git checkout . / -f discards uncommitted changes"
+        : null;
+    case "restore":
+      return paths.some((a) => a === "." || a === ":/") &&
+        (!has(rest, "--staged", "-S") || has(rest, "--worktree", "-W"))
+        ? "git restore . discards uncommitted changes"
+        : null;
+    case "switch":
+      return has(rest, "--discard-changes", "--force", "-f")
+        ? "git switch --discard-changes discards uncommitted changes"
+        : null;
+    case "branch":
+      return has(rest, "-D") || (has(rest, "--delete", "-d") && has(rest, "--force", "-f"))
+        ? "git branch -D deletes an unmerged branch"
+        : null;
+    case "stash":
+      return ["drop", "clear"].includes(rest[0]!) ? "git stash drop/clear loses stashes" : null;
+    case "reflog":
+      return ["expire", "delete"].includes(rest[0]!) ? "git reflog expire loses history" : null;
+    case "filter-branch":
+    case "filter-repo":
+      return `git ${sub} rewrites the whole history`;
+    default:
+      return null;
+  }
+}
+
+function program(name: string, args: string[]): string | null {
+  switch (name) {
+    case "git":
+      return git(args);
+    case "rm":
+      if (has(args, "--no-preserve-root")) return "rm --no-preserve-root";
+      return has(args, "-r", "-R", "--recursive") && args.some((a) => ROOTS.has(a))
+        ? "rm -r on /, ~, . or * deletes everything below it"
+        : null;
+    case "dd":
+      return args.some((a) => a.startsWith("of=/dev/")) ? "dd onto a device erases a disk" : null;
+    case "diskutil":
+      return /^(erase|zero|randomize|secureErase|partitionDisk)/i.test(args[0] ?? "")
+        ? `diskutil ${args[0]} erases a disk`
+        : null;
+    case "chmod":
+    case "chown":
+      return has(args, "-R") && args.some((a) => ROOTS.has(a))
+        ? `${name} -R on /, ~ or . changes every file below it`
+        : null;
+    default:
+      return name.startsWith("mkfs") ? `${name} formats a disk` : null;
+  }
+}
+
+// Why the command is dangerous, or null when it isn't.
+export function check(command: string): string | null {
+  if (/:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:/.test(command)) return "fork bomb";
+  if (/\b(curl|wget)\b[^|;&]*\|\s*(sudo\s+)?(ba|z|da)?sh\b/.test(command))
+    return "piping a download into a shell runs unreviewed code";
+  if (/>\s*\/dev\/(sd|disk|nvme|hd)/.test(command)) return "writing to a raw disk device";
+  for (let words of parse(command)) {
+    while (/^\w+=/.test(words[0] ?? "") || WRAPPERS.has(words[0] ?? "")) {
+      words = words.slice(1);
+      while (words[0]?.startsWith("-") || /^\w+=/.test(words[0] ?? "")) words = words.slice(1);
+    }
+    const [path, ...args] = words;
+    if (!path) continue;
+    const name = path.split("/").at(-1)!;
+    let reason: string | null;
+    if (name === "eval") reason = check(args.join(" "));
+    else if (SHELLS.has(name) && args.includes("-c"))
+      reason = check(args[args.indexOf("-c") + 1] ?? "");
+    else reason = program(name, args);
+    if (reason) return reason;
+  }
+  return null;
+}
+
+async function main() {
+  const { tool_name, tool_input } = (await Bun.stdin.json()) as Input;
+  if (tool_name !== "Bash" || !tool_input?.command) return;
+  const reason = check(tool_input.command);
+  if (!reason) return;
+  const hookSpecificOutput = {
+    hookEventName: "PreToolUse",
+    permissionDecision: "deny",
+    permissionDecisionReason: `Blocked by the am guard: ${reason}. If it's really needed, ask ` +
+      "the user to run it themselves with `! <command>`.",
+  };
+  console.log(JSON.stringify({ hookSpecificOutput }));
+}
+
+if (import.meta.main) main().catch(() => {}); // unusable input: allow

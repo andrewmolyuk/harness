@@ -3,7 +3,9 @@
 Claude Code plugin marketplace. Its `am` plugin has three skills: `glossary` and `adr` keep a
 project's domain glossary and ADRs in `.about/`; `tidy` rechecks files for consistency,
 duplicates and wordiness. In a project that already has `.about/`, a session-end hook reviews
-each finished conversation with `glossary` and `adr` in the background; it needs `bun`.
+each finished conversation with `glossary` and `adr` in the background. In every project, a
+guard hook blocks destructive git and shell commands (`git push --force`, `git reset --hard`,
+`rm -rf /`…) and leaves them to the user. Both hooks need `bun`.
 
 ## Install
 

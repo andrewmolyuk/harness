@@ -23,7 +23,8 @@
   Status…). A new or changed term goes there first.
 - Skills are independent: no links or references between them.
 - Keep skills short. Every line loads with the skill; cut what doesn't change behaviour.
-- Hooks are TypeScript run with `bun`, each with a `<hook>.test.ts` beside it. A hook does
-  nothing unless the project opted in, and quietly does nothing when a tool it needs is missing.
+- Hooks are TypeScript run with `bun`, each with a `<hook>.test.ts` beside it. A hook that acts
+  on the project does nothing unless the project opted in; a hook that only blocks runs
+  everywhere. Either quietly does nothing when a tool it needs is missing.
 - Commits follow Conventional Commits (`feat:`, `docs:`, `feat(adr):`), with no `Co-Authored-By`
   line.

@@ -1,7 +1,7 @@
 {
   "name": "am",
-  "version": "0.1.0",
-  "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files) and a session-end review.",
+  "version": "0.2.0",
+  "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files), a session-end review, and a guard against destructive commands.",
   "author": {
     "name": "Andrew Molyuk",
     "email": "andrew@molyuk.com"
