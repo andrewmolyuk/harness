@@ -42,6 +42,16 @@ The project's `.harness.json`: its settings for the `am` hooks, such as extra co
 guard to block.
 _Avoid_: harness file, settings
 
+**Git hook**:
+A script git runs at a point in its own workflow (`pre-commit`, `commit-msg`, `pre-push`),
+for every commit or push, whether or not Claude made it.
+_Avoid_: "hook" alone, which here means a Claude Code hook
+
+**Built-in check**:
+A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
+Harness config.
+_Planned_: none shipped yet
+
 ## Decisions
 
 **Decision**:
