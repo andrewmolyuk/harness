@@ -1,7 +1,7 @@
 {
   "name": "am",
   "version": "0.1.0",
-  "description": "Shared skills: glossary and ADRs kept in .about/, and tidy for rechecking files.",
+  "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files) and a session-end review.",
   "author": {
     "name": "Andrew Molyuk",
     "email": "andrew@molyuk.com"
@@ -11,6 +11,7 @@
     "glossary",
     "adr",
     "domain-modeling",
-    "tidy"
+    "tidy",
+    "hooks"
   ]
 }

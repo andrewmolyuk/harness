@@ -11,7 +11,7 @@
     {
       "name": "am",
       "source": "./plugins/am",
-      "description": "Shared skills: glossary and ADRs kept in .about/, and tidy for rechecking files."
+      "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files) and a session-end review."
     }
   ]
 }

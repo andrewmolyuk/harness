@@ -1,7 +1,8 @@
 # harness glossary
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
-files consistent: a glossary of terms, a log of ADRs, and a tidy-up check.
+files consistent: a glossary of terms, a log of ADRs, a tidy-up check, and a review of each
+finished session.
 
 ## Glossary
 
