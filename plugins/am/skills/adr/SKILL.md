@@ -59,6 +59,7 @@ Write an ADR only when all three hold — otherwise the conversation is the reco
 - Decided → `Status: accepted`. Still open → `Status: proposed` with the options: a draft,
   edit it freely. Once settled, rewrite it as the decision taken ("we won't do X" is a decision
   too) and mark it `accepted`.
-- Once `accepted`, an ADR is immutable. A changed decision is a new ADR that supersedes the old
-  one; in the old one, change only its status.
+- Once `accepted`, an ADR is immutable: you may only fix a typo in it, within an hour of
+  writing it and before it's committed. A changed decision is a new ADR that supersedes the old
+  one; in the old one, change only its Status and Date.
 - Tell the user in one line what changed.

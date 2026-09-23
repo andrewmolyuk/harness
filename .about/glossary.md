@@ -68,8 +68,8 @@ and a real trade-off.
 _Avoid_: decision record, design doc
 
 **Status**:
-An ADR's stage: proposed (still open, editable), accepted (decided; immutable once committed)
-or superseded (replaced by a later ADR).
+An ADR's stage: proposed (still open, editable), accepted (decided; immutable but for a typo
+fixed within an hour and before it's committed) or superseded (replaced by a later ADR).
 
 **Supersede**:
 To replace an accepted ADR with a new one; the old one changes only its Status, and the Date

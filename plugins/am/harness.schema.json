@@ -30,7 +30,7 @@
       }
     },
     "gitHooks": {
-      "description": "Git hooks to generate: each runs its entries in order and stops at the first failure. A hook is installed only when its key is present.",
+      "description": "Git hooks to generate: each runs its entries in order and stops at the first failure. A Git hook is installed only when its key is present.",
       "type": "object",
       "additionalProperties": false,
       "properties": {

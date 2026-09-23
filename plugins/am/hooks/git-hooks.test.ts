@@ -112,7 +112,7 @@ describe("sync", () => {
     writeFileSync(hook("pre-commit"), "#!/bin/sh\nexit 0\n");
     config({ gitHooks: { "pre-commit": ["true"] } });
     expect(sync(repo)).toEqual([
-      "pre-commit: left alone, an existing hook the am plugin didn't write",
+      "pre-commit: left alone, an existing Git hook the am plugin didn't write",
     ]);
     expect(readFileSync(hook("pre-commit"), "utf8")).toBe("#!/bin/sh\nexit 0\n");
     config({});

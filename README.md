@@ -23,9 +23,9 @@ hook runs its entries in order, Built-in checks (`am:…`) or shell commands, un
 }
 ```
 
-The Git hooks go into `.git/hooks`, marked as the plugin's own; a hook already there is left
-alone. `am:linear-history` also sets `pull.rebase=true`. For editor checks, set `$schema` to
-`https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`.
+The Git hooks go into `.git/hooks`, marked as the plugin's own; a Git hook already there is
+left alone. `am:linear-history` also sets `pull.rebase=true`. For editor checks, set `$schema`
+to `https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`.
 
 ## Install
 

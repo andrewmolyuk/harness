@@ -105,7 +105,8 @@ export function sync(dir: string): string[] {
     const entries = hooks.get(hook);
     const current = existsSync(file) ? readFileSync(file, "utf8") : null;
     if (current !== null && !current.includes(MARKER)) {
-      if (entries) report.push(`${hook}: left alone, an existing hook the am plugin didn't write`);
+      if (entries)
+        report.push(`${hook}: left alone, an existing Git hook the am plugin didn't write`);
     } else if (entries) {
       mkdirSync(folder, { recursive: true });
       writeFileSync(file, script(hook, entries));
