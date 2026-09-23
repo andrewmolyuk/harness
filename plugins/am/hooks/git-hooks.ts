@@ -1,5 +1,5 @@
 // SessionStart hook: in a project with .harness.json, generate the Git hooks its `gitHooks`
-// lists into the repo's hooks folder and copy the Built-in checks beside them (ADR 0005).
+// lists into the repo's hooks folder and copy the Built-in checks beside them (ADR 0007).
 // It writes and removes only hooks marked as its own; problems are reported to Claude, and
 // anything missing (git, a repo, the config) means it quietly does nothing.
 import { spawnSync } from "node:child_process";

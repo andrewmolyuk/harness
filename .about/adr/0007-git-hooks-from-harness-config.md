@@ -1,6 +1,6 @@
 # Git hooks are generated from the harness config
 
-Status: superseded by 0007
+Status: accepted
 Date: 2026-09-24
 
 A project lists what each Git hook runs in `.harness.json`, under `gitHooks`: `pre-commit`,
@@ -20,15 +20,18 @@ checks beside them, so they run without Claude or the plugin and follow each plu
 ```
 
 Built-in checks, each tied to one Git hook (listing it under another fails the sync):
-- `am:conventional-commits` (commit-msg) — `type(scope)!: description` with a standard type;
-  git's own `Merge`, `Revert`, `fixup!` and `squash!` messages and `#` lines pass.
+- `am:adr-immutable` (pre-commit) — a committed accepted ADR is only superseded (ADR 0006).
+- `am:conventional-commits` (commit-msg) — Conventional Commits 1.0.0 as written: a
+  `type(scope)!: description` subject with any type, in any case; a blank line before the body;
+  a `BREAKING CHANGE: description` footer in uppercase. git's own `Merge`, `Revert`, `fixup!`,
+  `squash!` and `amend!` messages and `#` lines pass.
 - `am:no-ai-coauthor` (commit-msg) — no `Co-Authored-By:` naming an AI; human co-authors pass.
 - `am:linear-history` (pre-push) — no merge commits among the commits being pushed; where it
   is listed, the sync also sets `pull.rebase=true` in the repo's git config.
 
-The Built-in checks take no settings: a project that wants other commit types or AI identities
-adds its own command. `.harness.json` names its JSON schema in `$schema`, so editors check it;
-the sync checks it too. The schema is published from this repo:
+The Built-in checks take no settings: a project that wants a fixed list of commit types or
+other AI identities adds its own command. `.harness.json` names its JSON schema in `$schema`,
+so editors check it; the sync checks it too. The schema is published from this repo:
 `https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`
 
 ## Considered options
@@ -38,8 +41,10 @@ the sync checks it too. The schema is published from this repo:
 - Config in `.about/` — that folder is project knowledge (ADR 0002), not configuration.
 - Hooks that call a runner in `${CLAUDE_PLUGIN_ROOT}` — the path changes with every plugin
   version and doesn't exist for anyone without the plugin.
-- Settings on Built-in checks (extra commit types, AI identities) — an extra command covers
-  them without growing the config.
+- Settings on Built-in checks (commit types, AI identities) — an extra command covers them
+  without growing the config.
+- Only lowercase standard types (`feat`, `fix`, `docs`…), as ADR 0005 had it — stricter than
+  the spec, which allows any type and any case; a check named after a spec follows it.
 - Built-in checks always on for their hook — linear history doesn't suit every project, so
   every check is listed explicitly.
 - A committed `core.hooksPath` folder, or husky, lefthook or pre-commit — no single file to
