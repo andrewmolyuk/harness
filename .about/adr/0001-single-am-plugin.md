@@ -19,4 +19,4 @@ description.
 
 - Every project gets every skill in the plugin. Anything that must not run everywhere (hooks,
   MCP servers) has to be opt-in or go to a separate plugin.
-- Revisit when skill descriptions start crowding the context.
+- Revisit when skill descriptions start crowding the context window.
