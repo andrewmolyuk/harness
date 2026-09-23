@@ -17,7 +17,7 @@ hook runs its entries in order, Built-in checks (`am:…`) or shell commands, un
   "guard": { "block": [{ "pattern": "\\bterraform destroy\\b", "reason": "destroys infra" }] },
   "gitHooks": {
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
-    "pre-commit": ["bun run check"],
+    "pre-commit": ["am:adr-immutable", "bun run check"],
     "pre-push": ["am:linear-history"]
   }
 }

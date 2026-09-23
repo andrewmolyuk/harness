@@ -20,6 +20,7 @@ type GitHook = (typeof GIT_HOOKS)[number];
 
 export const GIT_HOOKS = ["pre-commit", "commit-msg", "pre-push"] as const;
 export const BUILTINS: Record<string, GitHook> = {
+  "adr-immutable": "pre-commit",
   "conventional-commits": "commit-msg",
   "no-ai-coauthor": "commit-msg",
   "linear-history": "pre-push",

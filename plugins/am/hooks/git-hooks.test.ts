@@ -45,6 +45,7 @@ describe("parse", () => {
     const props = schema.properties.gitHooks.properties;
     expect(Object.keys(props)).toEqual([...GIT_HOOKS]);
     const listed = [
+      ...props["pre-commit"].items.anyOf[0]!.enum!,
       ...props["commit-msg"].items.anyOf[0]!.enum!,
       ...props["pre-push"].items.anyOf[0]!.enum!,
     ];
