@@ -8,7 +8,7 @@
 - `plugins/am/hooks/` — `hooks.json` and the hook scripts it runs.
 - `plugins/am/githooks/` — Built-in checks, copied into a project's Git hooks folder: they
   import nothing from the plugin.
-- `plugins/am/lib/` — code shared by hooks.
+- `plugins/am/lib/` — code shared by hooks, and the preload `bunfig.toml` runs before every test.
 - `plugins/am/harness.schema.json` — the schema of a project's `.harness.json`.
 - `.about/` — this repo's own glossary and ADRs, written with these skills. Read them before
   changing a skill's vocabulary or structure.

@@ -1,0 +1,2 @@
+[test]
+preload = ["./plugins/am/lib/test-env.ts"]

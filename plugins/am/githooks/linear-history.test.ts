@@ -5,9 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { merges } from "./linear-history";
 
-// Inside a Git hook, GIT_DIR and friends point at the outer repo.
-for (const key of Object.keys(process.env)) if (key.startsWith("GIT_")) delete process.env[key];
-
 const ZERO = "0".repeat(40);
 const repo = mkdtempSync(join(tmpdir(), "linear-"));
 const git = (...args: string[]) =>

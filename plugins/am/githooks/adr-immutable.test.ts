@@ -5,9 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { violations } from "./adr-immutable";
 
-// Inside a Git hook, GIT_DIR and friends point at the outer repo.
-for (const key of Object.keys(process.env)) if (key.startsWith("GIT_")) delete process.env[key];
-
 let repo: string;
 const git = (...args: string[]) =>
   spawnSync("git", ["-C", repo, ...args], { encoding: "utf8" }).stdout.trim();

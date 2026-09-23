@@ -6,9 +6,6 @@ import { join } from "node:path";
 import schema from "../harness.schema.json";
 import { BUILTINS, GIT_HOOKS, parse, script, sync } from "./git-hooks";
 
-// Inside a Git hook, GIT_DIR and friends point at the outer repo.
-for (const key of Object.keys(process.env)) if (key.startsWith("GIT_")) delete process.env[key];
-
 const HOOK = join(import.meta.dir, "git-hooks.ts");
 
 describe("parse", () => {
