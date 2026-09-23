@@ -53,9 +53,11 @@ describe("hook", () => {
     calls = join(dir, "calls.txt");
     mkdirSync(join(project, ".about"), { recursive: true });
     mkdirSync(join(dir, "bin"));
-    // A stand-in for `claude` that records how it was started.
+    // A stand-in for `claude` that records how it was started. The rename makes the record
+    // appear only once complete.
     const stub = join(dir, "bin", "claude");
-    const script = `{ pwd; echo "$AM_SESSION_REVIEW"; printf '%s\\n' "$@"; cat; } > "${calls}"`;
+    const record = `{ pwd; echo "$AM_SESSION_REVIEW"; printf '%s\\n' "$@"; cat; }`;
+    const script = `${record} > "${calls}.tmp" && mv "${calls}.tmp" "${calls}"`;
     writeFileSync(stub, `#!/bin/sh\n${script}\n`);
     chmodSync(stub, 0o755);
     writeFileSync(transcript, [line("user", longText), line("assistant", "Recorded.")].join("\n"));
