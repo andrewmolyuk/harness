@@ -31,6 +31,9 @@ _Avoid_: marker, field, tag
 **Retired term**:
 A word dropped because the concept it named doesn't exist.
 
+**Unresolved item**:
+A contested name or a case the glossary can't answer yet, listed with what would settle it.
+
 ## Decisions
 
 **Decision**:
@@ -48,3 +51,10 @@ An ADR's stage: proposed (still open, editable), accepted (decided, immutable) o
 
 **Supersede**:
 To replace an accepted ADR with a new one; the old one changes only its Status.
+
+## Probing
+
+**Finding**:
+A contradiction or an unanswered case uncovered while probing; it is recorded, never papered
+over.
+_Avoid_: find

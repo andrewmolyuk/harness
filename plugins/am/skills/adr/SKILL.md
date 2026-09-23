@@ -41,7 +41,7 @@ paid or not?" Reach for:
 - the exception: which real case will be first to want to break this rule?
 - what already exists: data and clients built the old way — migrate them, or support both?
 
-Check the code as well: a decision the code already contradicts is the most valuable find —
+Check the code as well: a decision the code already contradicts is the most valuable finding —
 "You said Ordering calls Billing only through events, but `OrderService` calls
 `BillingClient.charge()` directly. Is the decision wrong, or is the code?" A case with no answer
 is a finding — don't paper over it: record it in a `proposed` ADR if the decision is worth one,

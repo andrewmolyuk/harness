@@ -35,8 +35,8 @@ Reach for:
 - other viewpoints: do support or billing call it something else?
 
 Check the code as well: a term the code uses differently, or one concept named differently
-across modules, is the most valuable find. A case the glossary can't answer is a finding: put it
-in `## Unresolved`, don't paper over it. Ask a few pointed questions at a time, not a
+across modules, is the most valuable finding. A case the glossary can't answer is a finding too:
+put it in `## Unresolved`, don't paper over it. Ask a few pointed questions at a time, not a
 questionnaire.
 
 ## Name
