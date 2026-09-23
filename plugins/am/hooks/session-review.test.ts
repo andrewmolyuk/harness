@@ -64,9 +64,10 @@ describe("hook", () => {
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
   async function run(input: object, env: Record<string, string> = {}) {
+    const { CLAUDE_PROJECT_DIR: _, ...base } = process.env;
     const proc = Bun.spawn(["bun", HOOK], {
       stdin: new Blob([JSON.stringify(input)]),
-      env: { ...process.env, PATH: `${join(dir, "bin")}:${process.env.PATH}`, ...env },
+      env: { ...base, PATH: `${join(dir, "bin")}:${process.env.PATH}`, ...env },
     });
     expect(await proc.exited).toBe(0);
   }
@@ -96,6 +97,13 @@ describe("hook", () => {
     const tools = ["Read", "Glob", "Grep", "Edit(./.about/**)", "Write(./.about/**)"];
     expect(out).toContain(["--allowedTools", ...tools].join("\n"));
     expect(out).toContain(`user: ${longText}`);
+  });
+
+  test("reviews the project, not the folder the session ended in", async () => {
+    const sub = join(project, "src");
+    mkdirSync(sub);
+    await run({ ...input(), cwd: sub }, { CLAUDE_PROJECT_DIR: project });
+    expect((await called())?.split("\n")[0]).toEndWith("/project");
   });
 
   test("does nothing in a project without .about/", async () => {

@@ -44,16 +44,18 @@ async function main() {
   const claude = Bun.which("claude");
   if (!claude) return;
 
-  const { cwd, transcript_path } = (await Bun.stdin.json()) as Input;
+  const input = (await Bun.stdin.json()) as Input;
+  const cwd = process.env.CLAUDE_PROJECT_DIR ?? input.cwd;
+  const transcript_path = input.transcript_path;
   if (!cwd || !transcript_path) return;
   if (!existsSync(join(cwd, ".about")) || !existsSync(transcript_path)) return;
 
   const convo = conversation(await Bun.file(transcript_path).text());
   if (convo.length < MIN_CHARS) return;
 
-  const input = join(tmpdir(), `am-session-review-${process.pid}.txt`);
+  const convoFile = join(tmpdir(), `am-session-review-${process.pid}.txt`);
   const log = join(tmpdir(), "am-session-review.log");
-  writeFileSync(input, convo);
+  writeFileSync(convoFile, convo);
   appendFileSync(log, `== ${new Date().toISOString()} ${cwd}\n`);
 
   const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT ?? resolve(import.meta.dir, "..");
@@ -63,10 +65,10 @@ async function main() {
   spawn(claude, args, {
     cwd,
     detached: true,
-    stdio: [openSync(input, "r"), out, out],
+    stdio: [openSync(convoFile, "r"), out, out],
     env: { ...process.env, AM_SESSION_REVIEW: "1" },
   }).unref();
-  unlinkSync(input); // the child keeps its open handle
+  unlinkSync(convoFile); // the child keeps its open handle
 }
 
 if (import.meta.main) main().catch(() => {}); // never fail the exit
