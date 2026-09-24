@@ -10,7 +10,7 @@ fix belongs in the harness — the project's or your own — so the next session
 
 ## Read
 
-From the project root, run `bun <this skill's base directory>/condense.ts`: no argument for the
+From the project folder, run `bun <this skill's base directory>/condense.ts`: no argument for the
 latest session (the current one, if it is running), `--last <n>` for more, or session ids. Read
 its output in full: prompts, commands, interrupts and failed tool calls with their `[line]`,
 repeated calls, and for several sessions a summary of failures by kind and repeated prompts.

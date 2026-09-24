@@ -43,6 +43,6 @@ For writing Vue 3 with TypeScript: the choices where more than one would be reas
   that calls a service (`api/monitors.ts`) for the requests.
 - Pinia holds only client state that outlives a component, such as the signed-in user, as a
   setup store: `defineStore('auth', () => { … })`.
-- Tests are Vitest, `<name>.test.ts` beside the file.
+- Tests are Vitest.
 
 **Test:** no store keeps a copy of data the server owns.
