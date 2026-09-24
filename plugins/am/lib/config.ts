@@ -1,5 +1,5 @@
-// The project's harness config, .harness.json (ADR 0004, 0007, 0009); harness.schema.json at the
-// plugin root describes it.
+// The project's Harness config, .harness.json (ADR 0004, 0007, 0009, 0011); harness.schema.json
+// at the plugin root describes it.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 

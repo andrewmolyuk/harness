@@ -39,8 +39,8 @@ A contested name or a case the glossary can't answer yet, listed with what would
 
 **Harness config**:
 The project's `.harness.json`: its settings for the `am` hooks — extra commands for the guard
-to block, the Git hooks to generate, and whether to install the Status line and where its bars
-turn yellow and red.
+to block, the Git hooks to generate, whether to install the Status line and its Thresholds, and
+whether to run the Session review.
 _Avoid_: harness file, settings
 
 **Git hook**:
@@ -65,9 +65,18 @@ installs in a project whose Harness config asks for it.
 _Avoid_: "status" alone, which is an ADR's Status
 _In code_: `statusline.ts`
 
+**Usage bar**:
+One of the Status line's three meters of how much is used: the context window, and the 5-hour
+and 7-day rate limits.
+_Avoid_: meter, gauge
+
+**Threshold**:
+The percentage from which a Usage bar shows a colour; each bar has a yellow and a red one.
+
 **Session review**:
-The `am` plugin's Claude Code hook that, when a session ends in a project with `.about/`, has a
-separate headless session record in the glossary and ADRs what the conversation settled.
+The `am` plugin's Claude Code hook that, when a session ends in a project whose Harness config
+asks for it (by default, one with `.about/`), has a separate headless session record in the
+glossary and ADRs what the conversation settled.
 _Avoid_: session-end review
 
 **Built-in check**:

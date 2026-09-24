@@ -10,7 +10,8 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { conversation } from "./session-review";
+import schema from "../harness.schema.json";
+import { conversation, wanted } from "./session-review";
 
 const HOOK = join(import.meta.dir, "session-review.ts");
 
@@ -37,6 +38,27 @@ describe("conversation", () => {
   test("keeps only the tail of a long session", () => {
     const text = conversation(line("user", "x".repeat(300_000)));
     expect(text.length).toBe(200_000);
+  });
+});
+
+describe("wanted", () => {
+  test("follows sessionReview, else whether .about/ exists", () => {
+    const dir = mkdtempSync(join(tmpdir(), "am-wanted-"));
+    const config = (value: string) => writeFileSync(join(dir, ".harness.json"), value);
+    expect(wanted(dir)).toBe(false);
+    config('{ "sessionReview": true }');
+    expect(wanted(dir)).toBe(true);
+    mkdirSync(join(dir, ".about"));
+    config("{}");
+    expect(wanted(dir)).toBe(true);
+    config('{ "sessionReview": false }');
+    expect(wanted(dir)).toBe(false);
+    config("{");
+    expect(wanted(dir)).toBe(true);
+  });
+
+  test("the schema allows it", () => {
+    expect(schema.properties.sessionReview.type).toBe("boolean");
   });
 });
 
@@ -110,6 +132,12 @@ describe("hook", () => {
 
   test("does nothing in a project without .about/", async () => {
     rmSync(join(project, ".about"), { recursive: true });
+    await run(input());
+    expect(await called(500)).toBeNull();
+  });
+
+  test("does nothing where .harness.json turns it off", async () => {
+    writeFileSync(join(project, ".harness.json"), '{ "sessionReview": false }');
     await run(input());
     expect(await called(500)).toBeNull();
   });

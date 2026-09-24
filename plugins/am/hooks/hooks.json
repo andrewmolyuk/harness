@@ -1,5 +1,5 @@
 {
-  "description": "Block destructive git and shell commands; generate the Git hooks .harness.json lists and install its status line; after a session in a project that keeps .about/, review it with the glossary and adr skills",
+  "description": "Block destructive git and shell commands; generate the Git hooks .harness.json lists and install its status line; after a session where sessionReview is on (by default, where .about/ exists), review it with the glossary and adr skills",
   "hooks": {
     "SessionStart": [
       {

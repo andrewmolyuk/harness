@@ -1,9 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json",
-  "guard": {
-    "block": []
+  "statusLine": {
+    "context": { "yellow": 10, "red": 15 },
+    "fiveHour": { "yellow": 50, "red": 80 },
+    "sevenDay": { "yellow": 80, "red": 95 }
   },
-  "statusLine": true,
+  "sessionReview": true,
   "gitHooks": {
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
     "pre-commit": ["am:adr-immutable", "bun run check"],

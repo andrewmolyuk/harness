@@ -1,10 +1,13 @@
-// SessionEnd hook: in a project that keeps .about/, review the finished conversation with the
-// glossary and adr skills in a detached headless run. It only edits .about/, never commits,
-// and never delays the exit: anything missing means it quietly does nothing.
+// SessionEnd hook: in a project that keeps .about/, or whose .harness.json has
+// `"sessionReview": true`, review the finished conversation with the glossary and adr skills in
+// a detached headless run; `"sessionReview": false` turns it off (ADR 0011). It only edits
+// .about/, never commits, and never delays the exit: anything missing means it quietly does
+// nothing.
 import { spawn } from "node:child_process";
 import { appendFileSync, existsSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { load } from "../lib/config";
 
 type Input = { cwd?: string; transcript_path?: string };
 type Block = { type?: string; text?: string };
@@ -17,6 +20,16 @@ const PROMPT = `The conversation that just ended is on stdin. Use the am:glossar
 skills to record what it settled in .about/. Nobody can answer questions: record only what the
 conversation clearly agreed; put anything contested or unanswered in the glossary's
 ## Unresolved or in a proposed ADR. Change nothing else, and end with one line per change.`;
+
+// `sessionReview` from the Harness config if it's true or false, else whether .about/ exists.
+// A broken config counts as none: at session end there is no one to tell.
+export function wanted(dir: string): boolean {
+  let setting: unknown;
+  try {
+    setting = load(dir)?.sessionReview;
+  } catch {}
+  return typeof setting === "boolean" ? setting : existsSync(join(dir, ".about"));
+}
 
 // User and assistant text only: no tool calls or tool results.
 export function conversation(jsonl: string): string {
@@ -48,7 +61,7 @@ async function main() {
   const cwd = process.env.CLAUDE_PROJECT_DIR ?? input.cwd;
   const transcript_path = input.transcript_path;
   if (!cwd || !transcript_path) return;
-  if (!existsSync(join(cwd, ".about")) || !existsSync(transcript_path)) return;
+  if (!wanted(cwd) || !existsSync(transcript_path)) return;
 
   const convo = conversation(await Bun.file(transcript_path).text());
   if (convo.length < MIN_CHARS) return;

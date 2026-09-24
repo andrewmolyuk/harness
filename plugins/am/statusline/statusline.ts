@@ -11,8 +11,12 @@ export type Input = {
   context_window?: { used_percentage?: number | null };
   rate_limits?: { five_hour?: Limit; seven_day?: Limit };
 };
-export type Threshold = { yellow: number; red: number };
-export type Thresholds = { context: Threshold; fiveHour: Threshold; sevenDay: Threshold };
+export type BarThresholds = { yellow: number; red: number };
+export type Thresholds = {
+  context: BarThresholds;
+  fiveHour: BarThresholds;
+  sevenDay: BarThresholds;
+};
 export type Repo = {
   branch: string;
   staged: number;
@@ -25,11 +29,10 @@ const RESET = "\x1b[00m";
 const paint = (code: string, text: string) => `\x1b[${code}m${text}${RESET}`;
 const label = (text: string) => paint("2;37", text);
 
-// Context turns yellow at 10% and red above 15%; the rate limits at 50% and 80%.
 export const THRESHOLDS: Thresholds = {
-  context: { yellow: 10, red: 16 },
+  context: { yellow: 10, red: 15 },
   fiveHour: { yellow: 50, red: 80 },
-  sevenDay: { yellow: 50, red: 80 },
+  sevenDay: { yellow: 80, red: 95 },
 };
 
 // The defaults, with the valid `statusLine` thresholds from the Harness config over them, and
@@ -67,7 +70,7 @@ export function thresholds(config: Config | null): { set: Thresholds; problems: 
 }
 
 // A bar and its percentage: dim green, yellow from `yellow`%, red from `red`%.
-export function bar(percent: number, width: number, { yellow, red }: Threshold): string {
+export function bar(percent: number, width: number, { yellow, red }: BarThresholds): string {
   const pct = Math.min(100, Math.max(0, Math.round(percent)));
   const filled = Math.floor((pct * width) / 100);
   const color = pct >= red ? "2;31" : pct >= yellow ? "2;33" : "2;32";

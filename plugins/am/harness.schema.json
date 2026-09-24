@@ -38,20 +38,24 @@
           "additionalProperties": false,
           "properties": {
             "context": {
-              "description": "The context bar; yellow from 10, red from 16 by default.",
-              "$ref": "#/definitions/threshold"
+              "description": "The context bar; yellow from 10, red from 15 by default.",
+              "$ref": "#/definitions/barThresholds"
             },
             "fiveHour": {
               "description": "The 5-hour bar; yellow from 50, red from 80 by default.",
-              "$ref": "#/definitions/threshold"
+              "$ref": "#/definitions/barThresholds"
             },
             "sevenDay": {
-              "description": "The 7-day bar; yellow from 50, red from 80 by default.",
-              "$ref": "#/definitions/threshold"
+              "description": "The 7-day bar; yellow from 80, red from 95 by default.",
+              "$ref": "#/definitions/barThresholds"
             }
           }
         }
       ]
+    },
+    "sessionReview": {
+      "description": "Review each finished conversation into .about/ with the glossary and adr skills. Without it, the review runs where .about/ exists.",
+      "type": "boolean"
     },
     "gitHooks": {
       "description": "Git hooks to generate: each runs its entries in order and stops at the first failure. A Git hook is installed only when its key is present.",
@@ -89,7 +93,7 @@
       "minLength": 1,
       "not": { "pattern": "^am:" }
     },
-    "threshold": {
+    "barThresholds": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
