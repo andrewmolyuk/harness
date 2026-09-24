@@ -3,12 +3,13 @@ import { mkdtempSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  around,
   call,
   condense,
   kind,
   latest,
+  mask,
   projectDir,
-  redact,
   report,
   summary,
   worth,
@@ -48,13 +49,13 @@ describe("call", () => {
   });
 });
 
-describe("redact", () => {
+describe("mask", () => {
   test("hides tokens and private keys", () => {
     const token = `ghp_${"a1".repeat(18)}`;
-    expect(redact(`export TOKEN=${token} done`)).toBe("export TOKEN=***** done");
+    expect(mask(`export TOKEN=${token} done`)).toBe("export TOKEN=***** done");
     const armour = (edge: string) => `-----${edge} RSA PRIVATE KEY-----`;
     const key = `${armour("BEGIN")}\nabc\n${armour("END")}`;
-    expect(redact(`key: ${key} end`)).toBe("key: ***** end");
+    expect(mask(`key: ${key} end`)).toBe("key: ***** end");
   });
 
   test("keeps session ids, hashes, paths and words", () => {
@@ -65,7 +66,7 @@ describe("redact", () => {
       "the_quite_long_identifier_without_any_digits_at_all",
       "1108447f-79cb-4cd4-bb61-6d1331240608.jsonl",
     ].join(" ");
-    expect(redact(kept)).toBe(kept);
+    expect(mask(kept)).toBe(kept);
   });
 });
 
@@ -140,6 +141,34 @@ describe("report and summary", () => {
     const text = summary([s1, s2]);
     expect(text).toContain("repeated prompts:\n  2× recheck all files for consistency");
     expect(text).not.toContain("commit it");
+  });
+});
+
+describe("around", () => {
+  const token = `ghp_${"a1".repeat(18)}`;
+  const jsonl = [
+    user("first"),
+    user("fix the thing"),
+    tool("t1", "Bash", { command: "cat notes.txt" }),
+    user([{ type: "tool_result", tool_use_id: "t1", content: `TOKEN=${token}\nrest` }]),
+    tool("t2", "Bash", { command: "false" }),
+    result("t2", "Exit code 1"),
+    user("last"),
+  ].join("\n");
+
+  test("shows the lines around one in full, with successful output masked", () => {
+    expect(around(jsonl, 3, 1)).toBe(
+      [
+        "[2] user: fix the thing",
+        "[3] assistant calls Bash(cat notes.txt)",
+        "[4] user result: TOKEN=*****\nrest",
+      ].join("\n"),
+    );
+  });
+
+  test("numbers lines as the condensed output does, and marks failures", () => {
+    const failed = condense(jsonl).events.find((e) => e.type === "error");
+    expect(around(jsonl, failed?.at ?? 0, 0)).toBe("[6] user result (failed): Exit code 1");
   });
 });
 

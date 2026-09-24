@@ -1,12 +1,13 @@
-// Condense Claude Code session transcripts into the signals a retro needs: the user's prompts
+// Condense Claude Code session transcripts into the signals a Retro needs: the user's prompts
 // and commands, failed tool calls by kind, interrupts, and repeated calls. Tool output that
 // succeeded is dropped, and anything shaped like a Secret is replaced with `*****`.
 //
 //   bun condense.ts                 the latest session of the project in the working directory
 //   bun condense.ts --last 5        its five latest sessions, then a summary across them
 //   bun condense.ts <id|file>...    those sessions
+//   bun condense.ts <id|file> --around <line>   the lines around one moment, in full but masked
 //
-// The latest leave out headless runs (the Session review's, `claude -p`) and sessions where
+// The latest leave out headless sessions (the Session review's, `claude -p`) and sessions where
 // nothing was typed and nothing failed, like the one /clear leaves.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
@@ -58,6 +59,8 @@ export type Session = {
 };
 
 const PROMPT_CHARS = 300;
+const AROUND_LINES = 5; // either side of the line asked for
+const AROUND_CHARS = 2_000; // per block
 const ERROR_CHARS = 200;
 const CALL_CHARS = 120;
 const REPEAT_MIN = 3;
@@ -69,7 +72,7 @@ const REPEATED = new Set(["Bash", "Read", "Grep", "Glob", "WebFetch"]);
 const PRIVATE_KEY = /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(-----END [A-Z ]*KEY-----|$)/g;
 const TOKEN = /[A-Za-z0-9_\-+]{32,}/g;
 const secret = (s: string) => /[A-Za-z]/.test(s) && /\d/.test(s) && !/^[0-9a-f-]+$/i.test(s);
-export function redact(text: string): string {
+export function mask(text: string): string {
   return text.replace(PRIVATE_KEY, "*****").replace(TOKEN, (s) => (secret(s) ? "*****" : s));
 }
 
@@ -114,7 +117,7 @@ const textOf = (content: unknown): string =>
       ? content.map((b: Block) => (b.type === "text" ? (b.text ?? "") : "")).join("\n")
       : "";
 
-// The user's own words, or null for what the harness wrote in the user's turn.
+// The user's own words, or null for what Claude Code wrote in the user's turn.
 function human(text: string): Event["type"] | null {
   if (/^\[Request interrupted by user/.test(text)) return "interrupt";
   if (/^<command-(name|message)>/.test(text)) return "command";
@@ -235,10 +238,10 @@ export function report(s: Session): string {
   ];
   if (s.repeats.length)
     out.push("", "Repeated calls:", ...s.repeats.map(([c, n]) => `${n}× ${clip(c, CALL_CHARS)}`));
-  return redact(out.join("\n"));
+  return mask(out.join("\n"));
 }
 
-// Prompts the user typed more than once, across sessions: work the harness could take over.
+// Prompts the user typed more than once, across sessions: work a skill or hook could take over.
 function repeatedPrompts(sessions: Session[]): string[] {
   const counts = new Map<string, number>();
   for (const s of sessions)
@@ -279,7 +282,41 @@ export function summary(sessions: Session[]): string {
   }
   const prompts = repeatedPrompts(sessions);
   if (prompts.length) out.push("repeated prompts:", ...prompts);
-  return redact(out.join("\n"));
+  return mask(out.join("\n"));
+}
+
+// The transcript's lines around one, numbered as in the condensed output: text, tool calls and
+// their results in full up to a limit, masked. What the Retro reads instead of the raw file, so
+// a Secret an earlier session printed doesn't reach its context again.
+export function around(jsonl: string, target: number, radius = AROUND_LINES): string {
+  const out: string[] = [];
+  let at = 0;
+  let cwd = "";
+  for (const raw of jsonl.split("\n")) {
+    let line: Line;
+    try {
+      line = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    if (line.cwd) cwd = line.cwd;
+    if (++at < target - radius) continue;
+    if (at > target + radius) break;
+    const content = line.message?.content;
+    const blocks: Block[] =
+      typeof content === "string" ? [{ type: "text", text: content }] : (content ?? []);
+    for (const b of blocks) {
+      const head = `[${at}] ${line.type}`;
+      const full = (text: string) => text.slice(0, AROUND_CHARS);
+      if (b.type === "text" && b.text?.trim()) out.push(`${head}: ${full(b.text)}`);
+      else if (b.type === "tool_use") out.push(`${head} calls ${call(b.name ?? "", b.input, cwd)}`);
+      else if (b.type === "tool_result") {
+        const text = textOf(b.content) || String(b.content ?? "");
+        out.push(`${head} result${b.is_error ? " (failed)" : ""}: ${full(text)}`);
+      }
+    }
+  }
+  return mask(out.join("\n"));
 }
 
 // ~/.claude/projects/<the path with every other character as ->.
@@ -295,7 +332,7 @@ export function latest(dir: string): string[] {
     .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
 }
 
-// A session worth a retro: someone worked in it, and something was typed or failed.
+// A session worth a Retro: someone worked in it, and something was typed or failed.
 export const worth = (s: Session) => !s.headless && s.events.some((e) => e.type !== "command");
 
 const read = (file: string) => condense(readFileSync(file, "utf8"), basename(file, ".jsonl"));
@@ -303,9 +340,14 @@ const read = (file: string) => condense(readFileSync(file, "utf8"), basename(fil
 if (import.meta.main) {
   const dir = projectDir(process.cwd());
   const args = process.argv.slice(2);
+  const named = (a: string) => (existsSync(a) ? a : join(dir, `${basename(a, ".jsonl")}.jsonl`));
+  const i = args.indexOf("--around");
+  if (i > 0) {
+    console.log(around(readFileSync(named(args[0]), "utf8"), Number(args[i + 1])));
+    process.exit(0);
+  }
   const n = args[0] === "--last" ? Number(args[1]) || 1 : 0;
   const all: Session[] = [];
-  const named = (a: string) => (existsSync(a) ? a : join(dir, `${basename(a, ".jsonl")}.jsonl`));
   if (args.length && !n) for (const a of args) all.push(read(named(a)));
   else
     for (const file of latest(dir)) {

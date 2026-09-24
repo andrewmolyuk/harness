@@ -3,8 +3,8 @@
 Claude Code plugin marketplace. Its `am` plugin has five skills: `glossary` and `adr` keep a
 project's domain glossary and ADRs in `.about/`; `tidy` rechecks files for consistency,
 duplicates and wordiness; `diagnose` reproduces a bug with a feedback loop and finds its cause
-before fixing it; `retro` reads past session transcripts for where work stalled and recommends
-the setup changes that would have prevented it. In a project that already has `.about/`, or sets
+before fixing it; `retro` reads past session transcripts for Stalls and recommends the Harness
+changes that would have prevented them. In a project that already has `.about/`, or sets
 `"sessionReview": true`, the Session review hook records what each finished conversation
 settled, with `glossary` and `adr` in the background; `"sessionReview": false` turns it off.
 In every project, the Guard hook blocks destructive git and shell commands (`git push --force`,

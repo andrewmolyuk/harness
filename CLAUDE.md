@@ -4,7 +4,8 @@
 
 - `.claude-plugin/marketplace.json` — the marketplace catalog.
 - `plugins/am/skills/<skill>/` — `SKILL.md` is the behaviour, loaded when the skill runs;
-  `format.md`, if present, is a file format, read only when writing.
+  `format.md`, if present, is a file format, read only when writing; a `.ts` script, if present,
+  is one the skill runs, with its test beside it.
 - `plugins/am/hooks/` — `hooks.json` and the hook scripts it runs.
 - `plugins/am/githooks/` — Built-in checks, copied into a project's Git hooks folder: they
   import nothing from the plugin.

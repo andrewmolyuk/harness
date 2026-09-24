@@ -38,6 +38,13 @@ A contested name or a case the glossary can't answer yet, listed with what would
 
 ## Configuration
 
+**Harness**:
+What shapes how Claude works in a project and its user can change for good: the project's
+CLAUDE.md, Harness config, settings, skills and hooks, the plugins it uses, and the user's own
+global CLAUDE.md and settings. Claude Code and the model aren't part of it, nor is a permission
+granted for one session. `harness`, in code font, is this repo, which supplies parts of one.
+_Avoid_: setup; environment, which here means environment settings (an Env file)
+
 **Harness config**:
 The project's `.harness.json`: its settings for the `am` hooks — extra commands for the Guard
 to block, the Git hooks to generate, whether to install the Status line and its Thresholds, and
@@ -79,12 +86,6 @@ The `am` plugin's Claude Code hook that, when a session ends in a project whose 
 asks for it (by default, one with `.about/`), has a separate headless session record in the
 glossary and ADRs what the conversation settled.
 _Avoid_: session-end review
-
-**Retro**:
-A review the user asks for of how past sessions went: where work stalled (a failed or refused
-tool call, an interrupt, a prompt typed again) and what change to the project's setup would
-have prevented it. Unlike the Session review, it looks at the work, not at what was settled.
-_Avoid_: retrospective, post-mortem
 
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
@@ -147,6 +148,20 @@ _Avoid_: probe, which is questioning a term or Decision
 **Seam**:
 A public boundary where a test observes behaviour without reaching inside the code; not a
 place to swap behaviour for a test.
+
+## Retro
+
+**Retro**:
+A review the user asks for of how past sessions went: their Stalls, and what change to the
+Harness would have prevented each. Unlike the Session review, it looks at the work, not at what
+was settled.
+_Avoid_: retrospective, post-mortem
+
+**Stall**:
+A point in a session where work stopped or went round again: a failed or refused tool call, an
+interrupt, a correction, a prompt the user had to type again. A failure that is part of the
+work (a red test mid-change) or a block that was right isn't one.
+_Avoid_: finding, which is a result of probing; friction, snag
 
 ## Secrets
 
