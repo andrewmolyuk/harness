@@ -58,7 +58,8 @@ silently:
 - No error handling for impossible cases.
 - If it could be 50 lines and it's 200, rewrite it.
 - When only running code can settle a question, prototype for that one question: no tests, no
-  error handling. Keep the answer, not the code.
+  error handling. Decide first what result would prove the assumption wrong; report what the
+  run showed under the conditions tried, not more. Keep the answer, not the code.
 
 **Test:** every changed line and every added feature traces to the stated problem.
 

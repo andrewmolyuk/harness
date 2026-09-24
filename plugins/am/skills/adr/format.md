@@ -16,7 +16,8 @@ Date: YYYY-MM-DD
 earns its place:
 
 - **Considered options** — rejected alternatives worth remembering; only ones actually discussed.
-- **Consequences** — non-obvious effects, including the downsides knowingly accepted.
+- **Consequences** — non-obvious effects, including the downsides knowingly accepted, and what
+  would make us revisit it ("Revisit when …").
 
 What typically qualifies — any kind of decision, not only architecture: domain rules and
 invariants that are not obvious or costly to change; architectural shape; how contexts integrate;

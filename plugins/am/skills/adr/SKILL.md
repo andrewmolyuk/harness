@@ -38,6 +38,8 @@ paid or not?" Reach for:
 - twice or out of order: retries, duplicates, concurrent actors
 - time: expiry, time zones, back-dated changes
 - growth: 10–100× load, data or users
+- trust: who can reach it (an anonymous caller, another tenant, crafted input), and what could
+  they do with it?
 - the exception: which real case will be first to want to break this rule?
 - what already exists: data and clients built the old way — migrate them, or support both?
 
