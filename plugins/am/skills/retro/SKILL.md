@@ -33,9 +33,10 @@ report, not a new one.
 - **Repeated prompts**: work the user keeps asking for by hand — a skill, a hook or a Git hook.
 - **Repeated calls**: Claude hunting for the same thing — a pointer in CLAUDE.md.
 
-A failure that is part of the work (a red test mid-change) or a block that was right is not a
-stall. Rank stalls by cost: how often, times what each cost the user (a retry, a mode switch, a
-wrong turn undone). Mention a one-off only if it was severe.
+A failure that is part of the work (a red test mid-change), a block that was right, or a prompt
+that is the user's own call each time ("commit it") is not a stall. Rank stalls by cost: how
+often, times what each cost the user (a retry, a mode switch, a wrong turn undone). Mention a
+one-off only if it was severe.
 
 ## Fix where it holds
 

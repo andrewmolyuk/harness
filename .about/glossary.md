@@ -158,9 +158,10 @@ was settled.
 _Avoid_: retrospective, post-mortem
 
 **Stall**:
-A point in a session where work stopped or went round again: a failed or refused tool call, an
-interrupt, a correction, a prompt the user had to type again. A failure that is part of the
-work (a red test mid-change) or a block that was right isn't one.
+A point in a session that cost the user something the Harness could have spared: a failed or
+refused tool call, an interrupt, a correction, a prompt the user had to type again or types by
+hand every time. A failure that is part of the work (a red test mid-change), a block that was
+right, or a prompt that is the user's own call each time ("commit it") isn't one.
 _Avoid_: finding, which is a result of probing; friction, snag
 
 ## Secrets

@@ -8,7 +8,7 @@
 //   bun condense.ts <id|file> --around <line>   the lines around one moment, in full but masked
 //
 // The latest leave out headless sessions (the Session review's, `claude -p`) and sessions where
-// nothing was typed and nothing failed, like the one /clear leaves.
+// nothing but /clear was typed and nothing failed.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, relative } from "node:path";
@@ -332,8 +332,9 @@ export function latest(dir: string): string[] {
     .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
 }
 
-// A session worth a Retro: someone worked in it, and something was typed or failed.
-export const worth = (s: Session) => !s.headless && s.events.some((e) => e.type !== "command");
+// A session worth a Retro: not headless, and something besides /clear was typed or failed.
+export const worth = (s: Session) =>
+  !s.headless && s.events.some((e) => e.type !== "command" || !/^\/clear\b/.test(e.text));
 
 const read = (file: string) => condense(readFileSync(file, "utf8"), basename(file, ".jsonl"));
 

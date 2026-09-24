@@ -187,6 +187,7 @@ describe("sessions", () => {
   test("a session is worth a retro when someone typed or something failed", () => {
     expect(worth(condense(user("fix the thing")))).toBe(true);
     expect(worth(condense(user("<command-name>/clear</command-name>")))).toBe(false);
+    expect(worth(condense(user("<command-name>/am:retro</command-name>")))).toBe(true);
     const review = user("review this conversation", { entrypoint: "sdk-cli" });
     expect(worth(condense(review))).toBe(false);
   });
