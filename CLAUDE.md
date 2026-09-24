@@ -20,7 +20,9 @@
 - Run both `claude plugin validate` commands and `bun run check` (types and tests) after every
   change.
 - Markdown and TypeScript lines stay within 100 characters (frontmatter `description`
-  excepted), with no trailing spaces.
+  excepted), with no trailing spaces; `lines.test.ts` checks them.
+- Before calling a change done, run `am:tidy` on the changed files, then `am:glossary` and
+  `am:adr` for any term or decision the change settled.
 - A session loads skill text at startup: try an edited skill in a new `--plugin-dir` session.
 
 ## Rules
