@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json",
   "statusLine": {
-    "context": { "yellow": 10, "red": 15 },
-    "fiveHour": { "yellow": 50, "red": 80 },
+    "context": { "yellow": 15, "red": 20 },
+    "fiveHour": { "yellow": 70, "red": 85 },
     "sevenDay": { "yellow": 80, "red": 95 }
   },
   "sessionReview": true,

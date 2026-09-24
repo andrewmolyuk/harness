@@ -25,8 +25,8 @@ const paint = (code: string, text: string) => `\x1b[${code}m${text}${RESET}`;
 const label = (text: string) => paint("2;37", text);
 
 export const THRESHOLDS: Thresholds = {
-  context: { yellow: 10, red: 15 },
-  fiveHour: { yellow: 50, red: 80 },
+  context: { yellow: 15, red: 20 },
+  fiveHour: { yellow: 70, red: 85 },
   sevenDay: { yellow: 80, red: 95 },
 };
 

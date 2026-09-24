@@ -38,11 +38,11 @@
           "additionalProperties": false,
           "properties": {
             "context": {
-              "description": "The context bar; yellow from 10, red from 15 by default.",
+              "description": "The context bar; yellow from 15, red from 20 by default.",
               "$ref": "#/definitions/barThresholds"
             },
             "fiveHour": {
-              "description": "The 5-hour bar; yellow from 50, red from 80 by default.",
+              "description": "The 5-hour bar; yellow from 70, red from 85 by default.",
               "$ref": "#/definitions/barThresholds"
             },
             "sevenDay": {

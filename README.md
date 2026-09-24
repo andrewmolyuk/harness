@@ -59,7 +59,7 @@ switch one on by changing its value:
 - **`gitHooks`** — the Git hooks to generate. Each runs its entries in order, Built-in checks
   (`am:…`) or shell commands, until one fails.
 - **`statusLine`** — `true`, or the percentages where its bars turn yellow and red: `context`
-  (10, 15 by default), `fiveHour` (50, 80) and `sevenDay` (80, 95).
+  (15, 20 by default), `fiveHour` (70, 85) and `sevenDay` (80, 95).
 - **`guidelines`** — `true` loads the Guidelines.
 - **`sessionReview`** — `true` or `false`; left out, it follows whether `.about/` exists.
 

@@ -29,13 +29,13 @@ describe("bar", () => {
     expect(bar(80, 10, t)).toStartWith("\x1b[2;31m");
   });
 
-  test("context is yellow from 10% and red from 15%", () => {
+  test("context is yellow from 15% and red from 20%", () => {
     const ctx = (used: number) =>
       render({ context_window: { used_percentage: used } }, null, 120).trim();
-    expect(ctx(9.4)).toContain("\x1b[2;32m");
-    expect(ctx(10)).toContain("\x1b[2;33m");
-    expect(ctx(14.4)).toContain("\x1b[2;33m");
-    expect(ctx(15)).toContain("\x1b[2;31m");
+    expect(ctx(14.4)).toContain("\x1b[2;32m");
+    expect(ctx(15)).toContain("\x1b[2;33m");
+    expect(ctx(19.4)).toContain("\x1b[2;33m");
+    expect(ctx(20)).toContain("\x1b[2;31m");
   });
 });
 
@@ -46,10 +46,10 @@ describe("thresholds", () => {
     const { set } = thresholds({ statusLine: { context: { red: 30 }, sevenDay: { red: 100 } } });
     expect(set).toEqual({
       ...THRESHOLDS,
-      context: { yellow: 10, red: 30 },
+      context: { yellow: 15, red: 30 },
       sevenDay: { yellow: 80, red: 100 },
     });
-    expect(THRESHOLDS.context.red).toBe(15);
+    expect(THRESHOLDS.context.red).toBe(20);
   });
 
   test("uses the defaults in place of wrong ones, and names each", () => {

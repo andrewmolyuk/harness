@@ -67,7 +67,7 @@ describe("sync", () => {
   test("reports wrong thresholds, and installs it all the same", () => {
     config({ statusLine: { context: { red: 5 } } });
     expect(sync(dir, "/v1/s.ts")).toEqual([
-      ".harness.json: statusLine.context: yellow (10) is above red (5); the defaults are used",
+      ".harness.json: statusLine.context: yellow (15) is above red (5); the defaults are used",
     ]);
     expect(settings().statusLine.command).toBe(command("/v1/s.ts"));
   });
