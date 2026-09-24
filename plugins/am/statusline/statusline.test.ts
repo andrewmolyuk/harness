@@ -1,0 +1,86 @@
+import { describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { bar, type Input, render, repo, resetTime, visible } from "./statusline";
+
+const plain = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
+const now = new Date(2026, 8, 24, 10, 0);
+const at = (...args: [number, number, number, number, number]) =>
+  new Date(...args).getTime() / 1000;
+
+describe("bar", () => {
+  test("fills by percentage, clamped, coloured by threshold", () => {
+    expect(plain(bar(34.6, 10))).toBe("███░░░░░░░ 35%");
+    expect(plain(bar(150, 5))).toBe("█████ 100%");
+    expect(plain(bar(-3, 5))).toBe("░░░░░ 0%");
+    expect(bar(49, 10)).toStartWith("\x1b[2;32m");
+    expect(bar(50, 10)).toStartWith("\x1b[2;33m");
+    expect(bar(80, 10)).toStartWith("\x1b[2;31m");
+  });
+
+  test("context is yellow from 10% and red above 15%", () => {
+    const ctx = (used: number) =>
+      render({ context_window: { used_percentage: used } }, null, 120).trim();
+    expect(ctx(9.4)).toContain("\x1b[2;32m");
+    expect(ctx(10)).toContain("\x1b[2;33m");
+    expect(ctx(15)).toContain("\x1b[2;33m");
+    expect(ctx(15.6)).toContain("\x1b[2;31m");
+  });
+});
+
+describe("resetTime", () => {
+  test("shows the time alone today, and the day otherwise", () => {
+    expect(resetTime(at(2026, 8, 24, 14, 5), now)).toBe("14:05");
+    expect(resetTime(at(2026, 8, 25, 9, 0), now)).toBe("Fri Sep 25, 09:00");
+  });
+});
+
+describe("render", () => {
+  const input: Input = {
+    context_window: { used_percentage: 12 },
+    rate_limits: {
+      five_hour: { used_percentage: 55, resets_at: at(2026, 8, 24, 14, 0) },
+      seven_day: { used_percentage: 81 },
+    },
+  };
+  const git = { branch: "main", staged: 1, untracked: 0, modified: 2 };
+
+  test("puts the repo on the left and centres the usage", () => {
+    const line = plain(render(input, git, 200));
+    expect(line).toStartWith("main | S: 1 U: 0 A: 2 ");
+    expect(line).toContain("Ctx █░░░░░░░░░ 12% 5h █████░░░░░ 55% (");
+    expect(line).toEndWith("7d ████████░░ 81%");
+    const mid = line.length - line.indexOf("Ctx");
+    expect(line.indexOf("Ctx")).toBe(Math.floor((190 - mid) / 2));
+  });
+
+  test("shrinks the bars, then drops the reset time, when narrow", () => {
+    expect(plain(render(input, git, 94))).toContain("Ctx █░░░░░░░░░ 12%");
+    expect(plain(render(input, git, 93))).toContain("Ctx ░░░░░ 12% 5h ██░░░ 55% (");
+    expect(plain(render(input, git, 79))).toContain("55% (");
+    expect(plain(render(input, git, 78))).toContain("55% 7d");
+  });
+
+  test("never overlaps the left, and shows nothing it lacks", () => {
+    expect(plain(render(input, git, 20))).toContain("A: 2 Ctx");
+    expect(render({}, null, 120).trim()).toBe("");
+    expect(visible(render(input, null, 120))).toBeLessThanOrEqual(110);
+  });
+});
+
+describe("repo", () => {
+  test("counts staged, untracked and modified files", () => {
+    const dir = mkdtempSync(join(tmpdir(), "statusline-"));
+    expect(repo(dir)).toBeNull();
+    const run = (...args: string[]) => spawnSync("git", ["-C", dir, ...args]);
+    run("init", "-q", "-b", "work");
+    writeFileSync(join(dir, "a"), "1");
+    writeFileSync(join(dir, "b"), "1");
+    run("add", "a");
+    expect(repo(dir)).toEqual({ branch: "work", staged: 1, untracked: 1, modified: 0 });
+    writeFileSync(join(dir, "a"), "2");
+    expect(repo(dir)?.modified).toBe(1);
+  });
+});

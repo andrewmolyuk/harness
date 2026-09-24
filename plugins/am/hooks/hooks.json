@@ -1,5 +1,5 @@
 {
-  "description": "Block destructive git and shell commands; generate the Git hooks .harness.json lists; after a session in a project that keeps .about/, review it with the glossary and adr skills",
+  "description": "Block destructive git and shell commands; generate the Git hooks .harness.json lists and install its status line; after a session in a project that keeps .about/, review it with the glossary and adr skills",
   "hooks": {
     "SessionStart": [
       {
@@ -7,6 +7,10 @@
           {
             "type": "command",
             "command": "if command -v bun >/dev/null 2>&1; then bun \"${CLAUDE_PLUGIN_ROOT}/hooks/git-hooks.ts\"; fi"
+          },
+          {
+            "type": "command",
+            "command": "if command -v bun >/dev/null 2>&1; then bun \"${CLAUDE_PLUGIN_ROOT}/hooks/status-line.ts\"; fi"
           }
         ]
       }

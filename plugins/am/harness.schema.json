@@ -29,6 +29,10 @@
         }
       }
     },
+    "statusLine": {
+      "description": "Show the am plugin's status line in this project, set in .claude/settings.local.json.",
+      "type": "boolean"
+    },
     "gitHooks": {
       "description": "Git hooks to generate: each runs its entries in order and stops at the first failure. A Git hook is installed only when its key is present.",
       "type": "object",

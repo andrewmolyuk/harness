@@ -1,0 +1,110 @@
+// The Status line (ADR 0008): the branch and staged/untracked/modified counts on the left, and
+// context, 5-hour and 7-day usage bars centred on the line. When the line is too narrow it
+// shrinks the bars, then drops the 5-hour reset time.
+import { spawnSync } from "node:child_process";
+
+type Limit = { used_percentage?: number; resets_at?: number };
+export type Input = {
+  workspace?: { current_dir?: string };
+  context_window?: { used_percentage?: number };
+  rate_limits?: { five_hour?: Limit; seven_day?: Limit };
+};
+export type Repo = { branch: string; staged: number; untracked: number; modified: number };
+
+const RESET = "\x1b[00m";
+const paint = (code: string, text: string) => `\x1b[${code}m${text}${RESET}`;
+const label = (text: string) => paint("2;37", text);
+
+// A bar and its percentage: dim green, yellow from `yellow`%, red from `red`%.
+export function bar(percent: number, width: number, yellow = 50, red = 80): string {
+  const pct = Math.min(100, Math.max(0, Math.round(percent)));
+  const filled = Math.floor((pct * width) / 100);
+  const color = pct >= red ? "2;31" : pct >= yellow ? "2;33" : "2;32";
+  return `${paint(color, "█".repeat(filled) + "░".repeat(width - filled))} ${pct}%`;
+}
+
+// "HH:MM" when the reset falls today, local time, else "Wed Sep 24, 14:00".
+export function resetTime(epochSeconds: number, now = new Date()): string {
+  const at = new Date(epochSeconds * 1000);
+  const time = at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  if (at.toDateString() === now.toDateString()) return time;
+  const [weekday, month] = at.toDateString().split(" ");
+  return `${weekday} ${month} ${String(at.getDate()).padStart(2, "0")}, ${time}`;
+}
+
+export function left(repo: Repo | null): string {
+  if (!repo) return "";
+  const count = (name: string, n: number) =>
+    `${label(`${name}:`)} ${paint(n > 0 ? "2;36" : "2;90", String(n))}`;
+  return [
+    `${paint("01;35", repo.branch)} ${paint("2;90", "|")}`,
+    count("S", repo.staged),
+    count("U", repo.untracked),
+    count("A", repo.modified),
+  ].join(" ");
+}
+
+export function middle(input: Input, width: number, showReset: boolean): string {
+  const parts: string[] = [];
+  const ctx = input.context_window?.used_percentage;
+  const five = input.rate_limits?.five_hour;
+  const week = input.rate_limits?.seven_day?.used_percentage;
+  // Context turns yellow at 10% and red above 15%.
+  if (ctx != null) parts.push(`${label("Ctx")} ${bar(ctx, width, 10, 16)}`);
+  if (five?.used_percentage != null) {
+    let part = `${label("5h")} ${bar(five.used_percentage, width)}`;
+    if (showReset && five.resets_at != null)
+      part += ` ${paint("2;90", `(${resetTime(five.resets_at)})`)}`;
+    parts.push(part);
+  }
+  if (week != null) parts.push(`${label("7d")} ${bar(week, width)}`);
+  return parts.join(" ");
+}
+
+export const visible = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "").length;
+
+// The whole line for a terminal `columns` wide, less a margin against wrapping.
+export function render(input: Input, repo: Repo | null, columns: number): string {
+  const width = Math.max(40, columns - 10);
+  const l = left(repo);
+  let mid = "";
+  for (const [barWidth, showReset] of [[10, true], [5, true], [5, false]] as const) {
+    mid = middle(input, barWidth, showReset);
+    if (visible(l) + visible(mid) + 1 <= width) break;
+  }
+  const start = Math.max(Math.floor((width - visible(mid)) / 2), visible(l) + 1);
+  return l + " ".repeat(start - visible(l)) + mid;
+}
+
+function git(dir: string, ...args: string[]): string | null {
+  const r = spawnSync("git", ["--no-optional-locks", "-C", dir, ...args], { encoding: "utf8" });
+  return r.status === 0 ? r.stdout.trim() : null;
+}
+
+export function repo(dir: string): Repo | null {
+  if (git(dir, "rev-parse", "--show-toplevel") === null) return null;
+  const count = (...args: string[]) => (git(dir, ...args) || "").split("\n").filter(Boolean);
+  return {
+    branch: git(dir, "branch", "--show-current") || git(dir, "rev-parse", "--short", "HEAD") || "",
+    staged: count("diff", "--cached", "--name-only").length,
+    untracked: count("ls-files", "--others", "--exclude-standard").length,
+    modified: count("diff", "--name-only").length,
+  };
+}
+
+// The status line's input has no width, so $COLUMNS, else `tput cols`, else 120.
+function columns(): number {
+  const tput = spawnSync("tput", ["cols"], {
+    encoding: "utf8",
+    stdio: ["inherit", "pipe", "ignore"],
+  });
+  return Number(process.env.COLUMNS) || Number(tput.stdout) || 120;
+}
+
+async function main() {
+  const input = (await Bun.stdin.json()) as Input;
+  const dir = input.workspace?.current_dir;
+  console.log(render(input, dir ? repo(dir) : null, columns()));
+}
+
+if (import.meta.main) main().catch(() => {});

@@ -2,7 +2,7 @@
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
 files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), sync
-its Git hooks, and guard it against destructive commands.
+its Git hooks, show a Status line, and guard it against destructive commands.
 
 ## Glossary
 
@@ -39,7 +39,7 @@ A contested name or a case the glossary can't answer yet, listed with what would
 
 **Harness config**:
 The project's `.harness.json`: its settings for the `am` hooks — extra commands for the guard
-to block, and the Git hooks to generate.
+to block, the Git hooks to generate, and whether to install the Status line.
 _Avoid_: harness file, settings
 
 **Git hook**:
@@ -57,6 +57,13 @@ _Avoid_: blocker, firewall
 The `am` plugin's Claude Code hook that, at session start, brings a repo's Git hooks in line
 with the Harness config.
 _In code_: `git-hooks.ts`
+
+**Status line**:
+The line Claude Code shows under the prompt; the `am` plugin's one shows the branch, file
+counts, and context and rate-limit usage, installed in a project whose Harness config asks for
+it.
+_Avoid_: "status" alone, which is an ADR's Status
+_In code_: `statusline/statusline.ts`, installed by `hooks/status-line.ts`
 
 **Session review**:
 The `am` plugin's Claude Code hook that, when a session ends in a project with `.about/`, has a

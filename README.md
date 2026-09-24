@@ -7,14 +7,17 @@ records what each finished conversation settled, with `glossary` and `adr` in th
 In every project, the guard hook blocks destructive git and shell commands (`git push --force`,
 `git reset --hard`, `rm -rf /`…) and commands that skip Git hooks (`--no-verify`), and leaves
 them to the user. In a project with `.harness.json`, the sync hook generates the Git hooks it
-lists at session start. All hooks need `bun`.
+lists at session start, and the status-line hook installs the plugin's status line (branch, file
+counts, context and rate-limit usage) in `.claude/settings.local.json` when it has
+`"statusLine": true`. All hooks need `bun`.
 
-`.harness.json` configures both. The guard can block more commands but never fewer; each Git
+`.harness.json` configures them. The guard can block more commands but never fewer; each Git
 hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails:
 
 ```json
 {
   "guard": { "block": [{ "pattern": "\\bterraform destroy\\b", "reason": "destroys infra" }] },
+  "statusLine": true,
   "gitHooks": {
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
     "pre-commit": ["am:adr-immutable", "bun run check"],
