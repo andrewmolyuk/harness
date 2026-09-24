@@ -68,6 +68,13 @@ describe("render", () => {
     expect(render({}, null, 120).trim()).toBe("");
     expect(visible(render(input, null, 120))).toBeLessThanOrEqual(110);
   });
+
+  test("shows an empty context bar before the first reply", () => {
+    const empty = (context_window: Input["context_window"]) =>
+      plain(render({ context_window }, null, 120).trim());
+    expect(empty({})).toBe("Ctx ░░░░░░░░░░ 0%");
+    expect(empty({ used_percentage: null })).toBe("Ctx ░░░░░░░░░░ 0%");
+  });
 });
 
 describe("repo", () => {

@@ -1,4 +1,4 @@
-// The Status line (ADR 0008): the branch and staged, untracked, added and modified file counts
+// The Status line (ADR 0009): the branch and staged, untracked, added and modified file counts
 // on the left, and context, 5-hour and 7-day usage bars centred on the line. When the line is
 // too narrow it shrinks the bars, then drops the 5-hour reset time.
 import { spawnSync } from "node:child_process";
@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 type Limit = { used_percentage?: number; resets_at?: number };
 export type Input = {
   workspace?: { current_dir?: string };
-  context_window?: { used_percentage?: number };
+  context_window?: { used_percentage?: number | null };
   rate_limits?: { five_hour?: Limit; seven_day?: Limit };
 };
 export type Repo = {
@@ -53,7 +53,8 @@ export function left(repo: Repo | null): string {
 
 export function middle(input: Input, width: number, showReset: boolean): string {
   const parts: string[] = [];
-  const ctx = input.context_window?.used_percentage;
+  // Before the first reply the context window has no percentage: show it empty.
+  const ctx = input.context_window && (input.context_window.used_percentage ?? 0);
   const five = input.rate_limits?.five_hour;
   const week = input.rate_limits?.seven_day?.used_percentage;
   // Context turns yellow at 10% and red above 15%.
