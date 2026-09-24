@@ -65,7 +65,10 @@
         "pre-commit": {
           "type": "array",
           "items": {
-            "anyOf": [{ "enum": ["am:adr-immutable"] }, { "$ref": "#/definitions/command" }]
+            "anyOf": [
+              { "enum": ["am:adr-immutable", "am:no-secrets"] },
+              { "$ref": "#/definitions/command" }
+            ]
           }
         },
         "commit-msg": {

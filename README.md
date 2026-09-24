@@ -25,14 +25,17 @@ hook runs its entries in order, Built-in checks (`am:…`) or shell commands, un
   "sessionReview": false,
   "gitHooks": {
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
-    "pre-commit": ["am:adr-immutable", "bun run check"],
+    "pre-commit": ["am:adr-immutable", "am:no-secrets", "bun run check"],
     "pre-push": ["am:linear-history"]
   }
 }
 ```
 
 The Git hooks go into `.git/hooks`, marked as the plugin's own; a Git hook already there is
-left alone. `am:linear-history` also sets `pull.rebase=true`. For editor checks, set `$schema`
+left alone. `am:linear-history` also sets `pull.rebase=true`. `am:no-secrets` stops a commit that
+adds an API key, token, private key or env file, naming where, not what; `am:allow-secret` on a
+line lets a false alarm through, and on an env file's first line, the file. For editor checks,
+set `$schema`
 to `https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`.
 
 ## Install

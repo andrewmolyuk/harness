@@ -12,7 +12,7 @@ do: wrong output, a crash, a failing or flaky test, a slowdown. One symptom is o
 many causes it has.
 
 Read the project's glossary and ADRs (e.g. `.about/`) for the area you touch. In every command
-and output you show, replace secrets with `*****`; keep credentials in the environment.
+and output you show, replace secrets with `*****`; keep them in the environment.
 
 ## 1. Build a feedback loop
 

@@ -141,3 +141,16 @@ _Avoid_: probe, which is questioning a term or Decision
 **Seam**:
 A public boundary where a test observes behaviour without reaching inside the code; not a
 place to swap behaviour for a test.
+
+## Secrets
+
+**Secret**:
+A value that grants access: an API key, token, password or private key. A placeholder, a
+published example or a key meant to be public (a Stripe publishable key, a Firebase web key)
+isn't one, even where a check can't tell the difference. An env file counts as holding Secrets
+unless its first line says it holds none.
+_Avoid_: credential, key (alone)
+
+**Leak**:
+A Secret reaching anyone or anywhere it wasn't meant for: a commit, Claude's context, another
+host.
