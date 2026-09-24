@@ -21,8 +21,9 @@
   change.
 - Markdown and TypeScript lines stay within 100 characters (frontmatter `description`
   excepted), with no trailing spaces; `lines.test.ts` checks them.
-- Before calling a change done, run `am:tidy` on the changed files, then `am:glossary` and
-  `am:adr` for any term or decision the change settled.
+- After a change and its checks pass, run `am:tidy` on the changed files, then `am:glossary`
+  and `am:adr`, yourself, before reporting it done; report "nothing new" rather than leaving
+  them to the user.
 - A session loads skill text at startup: try an edited skill in a new `--plugin-dir` session.
 
 ## Rules
