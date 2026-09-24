@@ -63,7 +63,7 @@ The line Claude Code shows under the prompt; the `am` plugin's one shows the bra
 counts, and context and rate-limit usage, installed in a project whose Harness config asks for
 it.
 _Avoid_: "status" alone, which is an ADR's Status
-_In code_: `statusline/statusline.ts`, installed by `hooks/status-line.ts`
+_In code_: `statusline.ts`, installed by `status-line.ts`
 
 **Session review**:
 The `am` plugin's Claude Code hook that, when a session ends in a project with `.about/`, has a

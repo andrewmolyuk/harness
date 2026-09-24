@@ -2,7 +2,7 @@
 // Code's status line at the plugin's script, in the project's .claude/settings.local.json
 // (ADR 0008). It writes and removes only a status line marked as its own, rewriting it each
 // session since the script's path changes with every plugin version; problems are reported to
-// Claude, and anything missing (the config, a setting) means it quietly does nothing.
+// Claude, and anything missing (the config, the `statusLine` key) means it quietly does nothing.
 import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
