@@ -192,7 +192,7 @@ describe("sessions", () => {
     expect(worth(condense(review))).toBe(false);
   });
 
-  test("the project's folder is its path with every other character as -", () => {
+  test("the project's folder is its path, each character but a letter or digit as -", () => {
     expect(projectDir("/Users/a/my.app", "/home")).toBe("/home/.claude/projects/-Users-a-my-app");
   });
 });

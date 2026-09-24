@@ -319,7 +319,7 @@ export function around(jsonl: string, target: number, radius = AROUND_LINES): st
   return mask(out.join("\n"));
 }
 
-// ~/.claude/projects/<the path with every other character as ->.
+// ~/.claude/projects/<the path, each character but a letter or digit as ->.
 export const projectDir = (cwd: string, home = homedir()) =>
   join(home, ".claude", "projects", cwd.replace(/[^A-Za-z0-9]/g, "-"));
 

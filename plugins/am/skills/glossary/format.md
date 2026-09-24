@@ -37,7 +37,7 @@ _In code_: `OrderPatch`
 - **Topics.** While terms are few, keep one flat list. Once they fall into topics (orders,
   payments…), group them under a subheading per topic.
 - Optional trailers, sparingly: `_Planned_:` agreed but not built yet — what's missing;
-  `_In code_:` the code's older name for it.
+  `_In code_:` the code's name for it.
 - `## Retired terms`: words dropped because the concept doesn't exist, so a reader meeting
   them in old code knows they mean nothing. It and `## Unresolved` stay at the end of the file.
 
