@@ -1,10 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json",
-  "statusLine": {
-    "context": { "yellow": 15, "red": 20 },
-    "fiveHour": { "yellow": 70, "red": 85 },
-    "sevenDay": { "yellow": 80, "red": 95 }
-  },
+  "statusLine": true,
   "sessionReview": true,
   "guidelines": true,
   "gitHooks": {
