@@ -1,6 +1,6 @@
-// The Status line (ADR 0008): the branch and staged/untracked/modified counts on the left, and
-// context, 5-hour and 7-day usage bars centred on the line. When the line is too narrow it
-// shrinks the bars, then drops the 5-hour reset time.
+// The Status line (ADR 0008): the branch and staged, untracked, added and modified file counts
+// on the left, and context, 5-hour and 7-day usage bars centred on the line. When the line is
+// too narrow it shrinks the bars, then drops the 5-hour reset time.
 import { spawnSync } from "node:child_process";
 
 type Limit = { used_percentage?: number; resets_at?: number };
@@ -9,7 +9,13 @@ export type Input = {
   context_window?: { used_percentage?: number };
   rate_limits?: { five_hour?: Limit; seven_day?: Limit };
 };
-export type Repo = { branch: string; staged: number; untracked: number; modified: number };
+export type Repo = {
+  branch: string;
+  staged: number;
+  untracked: number;
+  added: number;
+  modified: number;
+};
 
 const RESET = "\x1b[00m";
 const paint = (code: string, text: string) => `\x1b[${code}m${text}${RESET}`;
@@ -40,7 +46,8 @@ export function left(repo: Repo | null): string {
     `${paint("01;35", repo.branch)} ${paint("2;90", "|")}`,
     count("S", repo.staged),
     count("U", repo.untracked),
-    count("A", repo.modified),
+    count("A", repo.added),
+    count("M", repo.modified),
   ].join(" ");
 }
 
@@ -83,12 +90,13 @@ function git(dir: string, ...args: string[]): string | null {
 
 export function repo(dir: string): Repo | null {
   if (git(dir, "rev-parse", "--show-toplevel") === null) return null;
-  const count = (...args: string[]) => (git(dir, ...args) || "").split("\n").filter(Boolean);
+  const files = (...args: string[]) => (git(dir, ...args) || "").split("\n").filter(Boolean);
   return {
     branch: git(dir, "branch", "--show-current") || git(dir, "rev-parse", "--short", "HEAD") || "",
-    staged: count("diff", "--cached", "--name-only").length,
-    untracked: count("ls-files", "--others", "--exclude-standard").length,
-    modified: count("diff", "--name-only").length,
+    staged: files("diff", "--cached", "--name-only").length,
+    untracked: files("ls-files", "--others", "--exclude-standard").length,
+    added: files("diff", "--cached", "--name-only", "--diff-filter=A").length,
+    modified: files("diff", "--name-only").length,
   };
 }
 

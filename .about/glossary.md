@@ -54,16 +54,15 @@ rules, never lift one.
 _Avoid_: blocker, firewall
 
 **Sync**:
-The `am` plugin's Claude Code hook that, at session start, brings a repo's Git hooks in line
-with the Harness config.
-_In code_: `git-hooks.ts`
+The `am` plugin's Claude Code hooks that, at session start, bring a repo's Git hooks and Status
+line in line with the Harness config, touching only what they marked as their own.
+_In code_: `git-hooks.ts`, `status-line.ts`
 
 **Status line**:
-The line Claude Code shows under the prompt; the `am` plugin's one shows the branch, file
-counts, and context and rate-limit usage, installed in a project whose Harness config asks for
-it.
+The line Claude Code shows under the prompt; the `am` plugin ships its own, which the Sync
+installs in a project whose Harness config asks for it.
 _Avoid_: "status" alone, which is an ADR's Status
-_In code_: `statusline.ts`, installed by `status-line.ts`
+_In code_: `statusline.ts`
 
 **Session review**:
 The `am` plugin's Claude Code hook that, when a session ends in a project with `.about/`, has a
