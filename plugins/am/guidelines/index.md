@@ -1,7 +1,8 @@
 # am guidelines
 
-Working rules from the `am` plugin. The project's own CLAUDE.md wins where they conflict. For a
-trivial change (a typo, a comment, an obvious one-liner), skip the ceremony and just do it.
+Working rules from the `am` plugin. The project's own CLAUDE.md, config and linters win where
+they conflict. For a trivial change (a typo, a comment, an obvious one-liner), skip the ceremony
+and just do it.
 
 - Touch only what the task needs and match the existing style; remove only the orphans your
   change made.
@@ -17,5 +18,9 @@ Read these files when their task comes up:
 - Designing a module or an interface, or deciding where it is tested from:
   `${CLAUDE_PLUGIN_ROOT}/guidelines/design.md`.
 - Writing tests, or building test-first: `${CLAUDE_PLUGIN_ROOT}/guidelines/testing.md`.
+- Writing TypeScript: `${CLAUDE_PLUGIN_ROOT}/guidelines/typescript.md`.
+- Writing a Vue component, a composable or a Pinia store, or starting a Vue app:
+  `${CLAUDE_PLUGIN_ROOT}/guidelines/vue.md`.
+- Writing Go: `${CLAUDE_PLUGIN_ROOT}/guidelines/go.md`.
 - Writing or editing a skill, a CLAUDE.md or AGENTS.md, or a prompt:
   `${CLAUDE_PLUGIN_ROOT}/guidelines/writing-for-agents.md`.

@@ -108,8 +108,8 @@ _Avoid_: knowledge, which here is a project's own glossary and ADRs in `.about/`
 _In code_: `guidelines.ts`, `guidelines/`
 
 **Guideline file**:
-One of the Guidelines' files beyond the index (principles, design, testing); Claude reads it
-when a task calls for it, never at session start.
+One of the Guidelines' files beyond the index (principles, design, testing, one per language);
+Claude reads it when a task calls for it, never at session start.
 
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
