@@ -1,6 +1,6 @@
 // Condense Claude Code session transcripts into the signals a Retro needs: the user's prompts
 // and commands, failed tool calls by kind, interrupts, and repeated calls. Tool output that
-// succeeded is dropped, and anything shaped like a Secret is replaced with `*****`.
+// succeeded is dropped, and anything shaped like a Secret is masked as `*****`.
 //
 //   bun condense.ts                 the latest session of the project in the working directory
 //   bun condense.ts --last 5        its five latest sessions, then a summary across them
@@ -290,6 +290,7 @@ export function summary(sessions: Session[]): string {
 // a Secret an earlier session printed doesn't reach its context again.
 export function around(jsonl: string, target: number, radius = AROUND_LINES): string {
   const out: string[] = [];
+  const full = (text: string) => text.slice(0, AROUND_CHARS);
   let at = 0;
   let cwd = "";
   for (const raw of jsonl.split("\n")) {
@@ -305,9 +306,8 @@ export function around(jsonl: string, target: number, radius = AROUND_LINES): st
     const content = line.message?.content;
     const blocks: Block[] =
       typeof content === "string" ? [{ type: "text", text: content }] : (content ?? []);
+    const head = `[${at}] ${line.type}`;
     for (const b of blocks) {
-      const head = `[${at}] ${line.type}`;
-      const full = (text: string) => text.slice(0, AROUND_CHARS);
       if (b.type === "text" && b.text?.trim()) out.push(`${head}: ${full(b.text)}`);
       else if (b.type === "tool_use") out.push(`${head} calls ${call(b.name ?? "", b.input, cwd)}`);
       else if (b.type === "tool_result") {
