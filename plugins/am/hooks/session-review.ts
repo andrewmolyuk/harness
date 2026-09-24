@@ -1,13 +1,13 @@
-// SessionEnd hook: in a project that keeps .about/, or whose .harness.json has
+// SessionEnd hook: in a repo that keeps .about/ at its root, or whose .harness.json has
 // `"sessionReview": true`, review the finished conversation with the glossary and adr skills in
-// a detached headless run; `"sessionReview": false` turns it off (ADR 0011). It only edits
-// .about/, never commits, and never delays the exit: anything missing means it quietly does
-// nothing.
+// a detached headless run at the repo root, where both sit (ADR 0018); `"sessionReview": false`
+// turns it off (ADR 0011). It only edits .about/, never commits, and never delays the exit:
+// anything missing means it quietly does nothing.
 import { spawn } from "node:child_process";
 import { appendFileSync, existsSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { load } from "../lib/config";
+import { load, repoRoot } from "../lib/config";
 
 type Input = { cwd?: string; transcript_path?: string };
 type Block = { type?: string; text?: string };
@@ -21,14 +21,14 @@ skills to record what it settled in .about/. Nobody can answer questions: record
 conversation clearly agreed; put anything contested or unanswered in the glossary's
 ## Unresolved or in a proposed ADR. Change nothing else, and end with one line per change.`;
 
-// `sessionReview` from the Harness config if it's true or false, else whether .about/ exists.
-// A broken config counts as none: at session end there is no one to tell.
-export function wanted(dir: string): boolean {
+// `sessionReview` from the Harness config if it's true or false, else whether .about/ exists at
+// the repo root. A broken config counts as none: at session end there is no one to tell.
+export function wanted(root: string): boolean {
   let setting: unknown;
   try {
-    setting = load(dir)?.sessionReview;
+    setting = load(root)?.sessionReview;
   } catch {}
-  return typeof setting === "boolean" ? setting : existsSync(join(dir, ".about"));
+  return typeof setting === "boolean" ? setting : existsSync(join(root, ".about"));
 }
 
 // User and assistant text only: no tool calls or tool results.
@@ -58,10 +58,11 @@ async function main() {
   if (!claude) return;
 
   const input = (await Bun.stdin.json()) as Input;
-  const cwd = process.env.CLAUDE_PROJECT_DIR ?? input.cwd;
+  const project = process.env.CLAUDE_PROJECT_DIR ?? input.cwd;
   const transcript_path = input.transcript_path;
-  if (!cwd || !transcript_path) return;
-  if (!wanted(cwd) || !existsSync(transcript_path)) return;
+  if (!project || !transcript_path) return;
+  const root = repoRoot(project) ?? project;
+  if (!wanted(root) || !existsSync(transcript_path)) return;
 
   const convo = conversation(await Bun.file(transcript_path).text());
   if (convo.length < MIN_CHARS) return;
@@ -69,14 +70,14 @@ async function main() {
   const convoFile = join(tmpdir(), `am-session-review-${process.pid}.txt`);
   const log = join(tmpdir(), "am-session-review.log");
   writeFileSync(convoFile, convo);
-  appendFileSync(log, `== ${new Date().toISOString()} ${cwd}\n`);
+  appendFileSync(log, `== ${new Date().toISOString()} ${root}\n`);
 
   const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT ?? resolve(import.meta.dir, "..");
   const args = ["-p", PROMPT, "--plugin-dir", pluginRoot, "--allowedTools"];
   args.push("Read", "Glob", "Grep", "Edit(./.about/**)", "Write(./.about/**)");
   const out = openSync(log, "a");
   spawn(claude, args, {
-    cwd,
+    cwd: root,
     detached: true,
     stdio: [openSync(convoFile, "r"), out, out],
     env: { ...process.env, AM_SESSION_REVIEW: "1" },

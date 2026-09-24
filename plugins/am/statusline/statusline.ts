@@ -1,6 +1,6 @@
-// The Status line (ADR 0009): the branch and staged, untracked, added and modified file counts
-// on the left, and context, 5-hour and 7-day usage bars centred on the line. When the line is
-// too narrow it shrinks the bars, then drops the 5-hour reset time. The Harness config can set
+// The Status line (ADR 0009): the branch and staged, untracked, added, modified and deleted file
+// counts on the left, and context, 5-hour and 7-day usage bars centred on the line. When the line
+// is too narrow it shrinks the bars, then drops the 5-hour reset time. The Harness config can set
 // the percentages at which each bar turns yellow and red.
 import { spawnSync } from "node:child_process";
 import { type Config, load } from "../lib/config";
@@ -23,6 +23,7 @@ export type Repo = {
   untracked: number;
   added: number;
   modified: number;
+  deleted: number;
 };
 
 const RESET = "\x1b[00m";
@@ -96,6 +97,7 @@ export function left(repo: Repo | null): string {
     count("U", repo.untracked),
     count("A", repo.added),
     count("M", repo.modified),
+    count("D", repo.deleted),
   ].join(" ");
 }
 
@@ -154,7 +156,9 @@ export function repo(dir: string): Repo | null {
     staged: files("diff", "--cached", "--name-only").length,
     untracked: files("ls-files", "--others", "--exclude-standard").length,
     added: files("diff", "--cached", "--name-only", "--diff-filter=A").length,
-    modified: files("diff", "--name-only").length,
+    // S and A (a part of S) count the index; U, M and D the working tree, each file in one.
+    modified: files("diff", "--name-only", "--diff-filter=d").length,
+    deleted: files("diff", "--name-only", "--diff-filter=D").length,
   };
 }
 
@@ -169,13 +173,13 @@ function columns(): number {
 
 async function main() {
   const input = (await Bun.stdin.json()) as Input;
-  const dir = input.workspace?.current_dir;
-  const project = input.workspace?.project_dir ?? dir;
+  const cwd = input.workspace?.current_dir;
+  const project = input.workspace?.project_dir ?? cwd;
   let config = null;
   try {
     config = project ? load(project) : null;
   } catch {}
-  console.log(render(input, dir ? repo(dir) : null, columns(), thresholds(config).set));
+  console.log(render(input, cwd ? repo(cwd) : null, columns(), thresholds(config).set));
 }
 
 if (import.meta.main) main().catch(() => {});

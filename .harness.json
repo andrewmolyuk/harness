@@ -10,5 +10,6 @@
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
     "pre-commit": ["am:adr-immutable", "am:no-secrets", "bun run check"],
     "pre-push": ["am:linear-history"]
-  }
+  },
+  "guard": {"block":[]}
 }

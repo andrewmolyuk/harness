@@ -82,8 +82,8 @@ function install(dir: string, want: boolean, script: string): string[] {
 
 async function main() {
   const { cwd } = (await Bun.stdin.json()) as Input;
-  const dir = process.env.CLAUDE_PROJECT_DIR ?? cwd;
-  const report = dir ? sync(dir) : [];
+  const project = process.env.CLAUDE_PROJECT_DIR ?? cwd;
+  const report = project ? sync(project) : [];
   if (report.length) console.log(`am status line:\n${report.join("\n")}`);
 }
 

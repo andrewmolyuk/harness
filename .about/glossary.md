@@ -46,10 +46,20 @@ granted for one session. `harness`, in code font, is this repo, which supplies p
 _Avoid_: setup; environment, which here means environment settings (an Env file)
 
 **Harness config**:
-The project's `.harness.json`: its settings for the `am` hooks — extra commands for the Guard
+The repo's `.harness.json`: its settings for the `am` hooks — extra commands for the Guard
 to block, the Git hooks to generate, whether to install the Status line and its Thresholds, and
-whether to run the Session review.
+whether to run the Session review. The plugin creates it in every repo, and adds the keys it
+lacks, each at a value that changes nothing; a project switches on the Status line and Git hooks
+by changing a value.
 _Avoid_: harness file, settings
+_In code_: `config.ts` reads it, `harness-config.ts` creates and completes it
+
+**Project folder**:
+The folder Claude Code starts a session in, where its per-project files such as
+`.claude/settings.local.json` live. It is the repo root or a folder below it, never the working
+directory a session moves to.
+_Avoid_: session's folder, "the folder Claude Code started in"
+_In code_: `CLAUDE_PROJECT_DIR`, `project`
 
 **Git hook**:
 A script git runs at a point in its own workflow (`pre-commit`, `commit-msg`, `pre-push`),
@@ -73,6 +83,11 @@ installs in a project whose Harness config asks for it.
 _Avoid_: "status" alone, which is an ADR's Status
 _In code_: `statusline.ts`
 
+**File count**:
+One of the Status line's tallies of changed files, each looking in one place: staged (S) and
+added (A) count the index, untracked (U), modified (M) and deleted (D) the working tree.
+_Avoid_: "modified" for a change that is only staged
+
 **Usage bar**:
 One of the Status line's three meters of how much is used: the context window, and the 5-hour
 and 7-day rate limits.
@@ -82,9 +97,9 @@ _Avoid_: meter, gauge
 The percentage from which a Usage bar shows a colour; each bar has a yellow and a red one.
 
 **Session review**:
-The `am` plugin's Claude Code hook that, when a session ends in a project whose Harness config
-asks for it (by default, one with `.about/`), has a separate headless session record in the
-glossary and ADRs what the conversation settled.
+The `am` plugin's Claude Code hook that, when a session ends in a repo whose Harness config
+asks for it (by default, one with `.about/` at its root), has a separate headless session
+record in the glossary and ADRs what the conversation settled.
 _Avoid_: session-end review
 
 **Built-in check**:

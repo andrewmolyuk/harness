@@ -304,17 +304,18 @@ export function leak(command: string, dir = "."): string | null {
 }
 
 async function main() {
-  const { cwd, tool_name, tool_input } = (await Bun.stdin.json()) as Input;
-  const project = process.env.CLAUDE_PROJECT_DIR ?? cwd;
-  const dir = cwd ?? project ?? ".";
+  const input = (await Bun.stdin.json()) as Input;
+  const { tool_name, tool_input } = input;
+  const project = process.env.CLAUDE_PROJECT_DIR ?? input.cwd;
+  const cwd = input.cwd ?? project ?? ".";
   let reason: string | null = null;
   let secret: string | null = null;
   if (tool_name === "Bash" && tool_input?.command) {
     reason = check(tool_input.command, projectBlocks(project));
-    if (!reason) secret = leak(tool_input.command, dir);
+    if (!reason) secret = leak(tool_input.command, cwd);
   } else if (tool_name === "Read" || tool_name === "Grep") {
     const paths = [tool_input?.file_path, tool_input?.path, tool_input?.glob];
-    for (const p of paths) secret ??= typeof p === "string" && p ? secretFile(p, dir) : null;
+    for (const p of paths) secret ??= typeof p === "string" && p ? secretFile(p, cwd) : null;
   }
   const why = reason
     ? `${reason}. If it's really needed, ask the user to run it themselves with \`! <command>\`.`

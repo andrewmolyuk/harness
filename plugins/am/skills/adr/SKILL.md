@@ -10,9 +10,9 @@ and justified; don't just agree.
 
 ## Files
 
-`.about/adr/NNNN-slug.md` — one decision per file ([format](format.md)). Read the existing
-titles and statuses before you start; create the folder with the first ADR. The project's own
-conventions (another path, an ADR template or skill) win.
+`.about/adr/NNNN-slug.md` at the git repo's root — one decision per file ([format](format.md)).
+Read the existing titles and statuses before you start; create the folder with the first ADR.
+The project's own conventions (another path, an ADR template or skill) win.
 
 ## Check
 

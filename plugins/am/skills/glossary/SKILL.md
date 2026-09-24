@@ -9,9 +9,10 @@ You are changing the project's language, not consuming it. Make it sharper; don'
 
 ## File
 
-`.about/glossary.md` ([format](format.md)). Read it before you start; create it with the first
-entry. With several contexts, record a term under the `## Context: <name>` the discussion is
-about; ask if unclear. The project's own conventions win over these defaults.
+`.about/glossary.md` at the git repo's root ([format](format.md)). Read it before you start;
+create it with the first entry. With several contexts (a monorepo's projects among them),
+record a term under the `## Context: <name>` the discussion is about; ask if unclear. The
+project's own conventions win over these defaults.
 
 ## Check
 

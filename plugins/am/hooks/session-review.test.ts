@@ -130,6 +130,14 @@ describe("hook", () => {
     expect((await called())?.split("\n")[0]).toEndWith("/project");
   });
 
+  test("reviews at the repo root, where .about/ sits, from a project in a subfolder", async () => {
+    Bun.spawnSync(["git", "-C", project, "init", "-q"]);
+    const app = join(project, "app");
+    mkdirSync(app);
+    await run({ ...input(), cwd: app }, { CLAUDE_PROJECT_DIR: app });
+    expect((await called())?.split("\n")[0]).toEndWith("/project");
+  });
+
   test("does nothing in a project without .about/", async () => {
     rmSync(join(project, ".about"), { recursive: true });
     await run(input());

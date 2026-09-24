@@ -1,20 +1,23 @@
 # harness
 
 Claude Code plugin marketplace. Its `am` plugin has five [skills](#skills) and the hooks below.
-In a project that already has `.about/`, or sets `"sessionReview": true`, the Session review
-hook records what each finished conversation settled, with `glossary` and `adr` in the
+In a repo that already has `.about/` at its root, or sets `"sessionReview": true`, the Session
+review hook records what each finished conversation settled, with `glossary` and `adr` in the
 background; `"sessionReview": false` turns it off. In every project, the Guard hook blocks
 destructive git and shell commands (`git push --force`, `git reset --hard`, `rm -rf /`…),
 commands that skip Git hooks (`--no-verify`), and tool calls that would Leak a Secret into
 Claude's context (`cat .env`, `printenv`, reading `~/.ssh/id_*`, `gh auth token`…), and leaves
-them to the user. In a project with `.harness.json`, at session start, the Sync hooks generate
-the Git hooks it lists and, with `statusLine` on, install the plugin's Status line (branch, file
-counts, context and rate-limit usage) in `.claude/settings.local.json`. All hooks need `bun`.
+them to the user. At session start, a hook creates `.harness.json` at the repo root with every
+setting off, or adds the keys an existing one lacks without changing its values, and the Sync
+hooks generate the Git hooks it lists and, with `statusLine` on, install the plugin's Status
+line (branch, file counts, context and rate-limit usage) in `.claude/settings.local.json`. All
+hooks need `bun`.
 
-`.harness.json` configures them. The Guard can block more commands but never fewer; each Git
-hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails;
-`statusLine` is `true` or, to change where its bars turn yellow and red, the percentages for
-`context` (10, 15 by default), `fiveHour` (50, 80) and `sevenDay` (80, 95):
+`.harness.json` configures them; switch a hook on by changing its value. The Guard can block
+more commands but never fewer; each Git hook runs its entries in order, Built-in checks
+(`am:…`) or shell commands, until one fails; `statusLine` is `true` or, to change where its
+bars turn yellow and red, the percentages for `context` (10, 15 by default), `fiveHour` (50, 80)
+and `sevenDay` (80, 95):
 
 ```json
 {
