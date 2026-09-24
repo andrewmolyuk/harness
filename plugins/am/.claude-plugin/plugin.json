@@ -1,6 +1,6 @@
 {
   "name": "am",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files, diagnose for finding a bug's cause, retro for learning from past sessions), a session review, a guard against destructive commands and secret leaks, Git hooks, a status line and working guidelines from .harness.json.",
   "author": {
     "name": "Andrew Molyuk",

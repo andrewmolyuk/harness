@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   bar,
   type Input,
+  branch,
   render,
-  repo,
   resetTime,
   THRESHOLDS,
   thresholds,
@@ -97,28 +97,42 @@ describe("render", () => {
       seven_day: { used_percentage: 81 },
     },
   };
-  const git = { branch: "main", staged: 1, untracked: 0, added: 1, modified: 2, deleted: 0 };
+  const model = { model: { display_name: "Opus 5.5" }, effort: { level: "high" } };
 
-  test("puts the repo on the left and centres the usage", () => {
-    const line = plain(render(input, git, 200));
-    expect(line).toStartWith("main | S: 1 U: 0 A: 1 M: 2 D: 0 ");
+  test("puts the branch on the left and centres the usage", () => {
+    const line = plain(render(input, "main", 200));
+    expect(line).toStartWith("main ");
     expect(line).toContain("Ctx █░░░░░░░░░ 12% 5h █████░░░░░ 55% (");
     expect(line).toEndWith("7d ████████░░ 81%");
     const mid = line.length - line.indexOf("Ctx");
-    expect(line.indexOf("Ctx")).toBe(Math.floor((190 - mid) / 2));
+    expect(line.indexOf("Ctx")).toBe(Math.floor((196 - mid) / 2));
   });
 
-  test("shrinks the bars, then drops the reset time, when narrow", () => {
-    expect(plain(render(input, git, 104))).toContain("Ctx █░░░░░░░░░ 12%");
-    expect(plain(render(input, git, 103))).toContain("Ctx ░░░░░ 12% 5h ██░░░ 55% (");
-    expect(plain(render(input, git, 89))).toContain("55% (");
-    expect(plain(render(input, git, 88))).toContain("55% 7d");
+  test("puts the model and its effort on the right", () => {
+    const line = plain(render({ ...input, ...model }, "main", 200));
+    expect(line).toMatch(/81% {2,}Opus 5\.5 \(high\)$/);
+    expect(line).toHaveLength(196);
+    expect(plain(render({ model: { display_name: "Opus 5.5" } }, null, 120))).toEndWith(
+      " Opus 5.5",
+    );
+  });
+
+  test("shrinks the bars, then drops the reset time, then the model, when narrow", () => {
+    const line = (columns: number) => plain(render({ ...input, ...model }, "main", columns));
+    expect(line(87)).toContain("Ctx █░░░░░░░░░ 12%");
+    expect(line(86)).toContain("Ctx ░░░░░ 12% 5h ██░░░ 55% (");
+    expect(line(72)).toContain("55% (");
+    expect(line(71)).toContain("55% 7d ████░ 81% Opus 5.5 (high)");
+    expect(line(64)).toEndWith("Opus 5.5 (high)");
+    expect(line(63)).toEndWith("7d ████░ 81%");
   });
 
   test("never overlaps the left, and shows nothing it lacks", () => {
-    expect(plain(render(input, git, 20))).toContain("D: 0 Ctx");
+    expect(plain(render(input, "a-very-long-branch-name-that-fills-the-line", 20))).toContain(
+      "line Ctx",
+    );
     expect(render({}, null, 120).trim()).toBe("");
-    expect(visible(render(input, null, 120))).toBeLessThanOrEqual(110);
+    expect(visible(render(input, null, 120))).toBeLessThanOrEqual(116);
   });
 
   test("shows an empty context bar before the first reply", () => {
@@ -138,33 +152,16 @@ describe("render", () => {
   });
 });
 
-describe("repo", () => {
-  test("counts staged, untracked, added, modified and deleted files", () => {
+describe("branch", () => {
+  test("names the branch, or the commit when detached, and null outside a repo", () => {
     const dir = mkdtempSync(join(tmpdir(), "statusline-"));
-    expect(repo(dir)).toBeNull();
-    const run = (...args: string[]) => spawnSync("git", ["-C", dir, ...args]);
+    expect(branch(dir)).toBeNull();
+    const run = (...args: string[]) => spawnSync("git", ["-C", dir, ...args], { encoding: "utf8" });
     run("init", "-q", "-b", "work");
-    writeFileSync(join(dir, "a"), "1");
-    writeFileSync(join(dir, "b"), "1");
-    run("add", "a");
-    expect(repo(dir)).toEqual({
-      branch: "work",
-      staged: 1,
-      untracked: 1,
-      added: 1,
-      modified: 0,
-      deleted: 0,
-    });
-    writeFileSync(join(dir, "a"), "2");
-    expect(repo(dir)?.modified).toBe(1);
-    run("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-qam", "x");
-    writeFileSync(join(dir, "a"), "3");
-    run("add", "a");
-    expect(repo(dir)).toMatchObject({ staged: 1, added: 0, modified: 0, deleted: 0 });
-    run("add", "b");
-    run("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-qm", "y");
-    run("rm", "-q", "a");
-    rmSync(join(dir, "b"));
-    expect(repo(dir)).toMatchObject({ staged: 1, modified: 0, deleted: 1 });
+    expect(branch(dir)).toBe("work");
+    run("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "--allow-empty",
+      "-m", "x");
+    run("checkout", "-q", "--detach");
+    expect(branch(dir)).toBe(run("rev-parse", "--short", "HEAD").stdout.trim());
   });
 });

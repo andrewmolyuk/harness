@@ -83,11 +83,6 @@ installs in a project whose Harness config asks for it.
 _Avoid_: "status" alone, which is an ADR's Status
 _In code_: `statusline.ts`
 
-**File count**:
-One of the Status line's tallies of changed files, each looking in one place: staged (S) and
-added (A) count the index, untracked (U), modified (M) and deleted (D) the working tree.
-_Avoid_: "modified" for a change that is only staged
-
 **Usage bar**:
 One of the Status line's three meters of how much is used: the context window, and the 5-hour
 and 7-day rate limits.
@@ -208,3 +203,8 @@ _In code_: `isEnvFile`
 **Leak**:
 A Secret reaching anyone or anywhere it wasn't meant for: a commit, Claude's context, another
 host.
+
+## Retired terms
+
+- **File count** — the Status line no longer tallies changed files (S, U, A, M, D); it shows
+  the branch alone.

@@ -1,13 +1,15 @@
-// The Status line (ADR 0009): the branch and staged, untracked, added, modified and deleted file
-// counts on the left, and context (with its tokens), 5-hour and 7-day usage bars centred on the
-// line. When the line is too narrow it shrinks the bars, then drops the 5-hour reset time. The
-// Harness config can set the percentages at which each bar turns yellow and red.
+// The Status line (ADR 0009): the branch on the left, context (with its tokens), 5-hour and 7-day
+// usage bars centred on the line, and the model with its effort on the right. When the line is
+// too narrow it shrinks the bars, then drops the 5-hour reset time, then the model. The Harness
+// config can set the percentages at which each bar turns yellow and red.
 import { spawnSync } from "node:child_process";
 import { type Config, load } from "../lib/config";
 
 type Limit = { used_percentage?: number; resets_at?: number };
 export type Input = {
   workspace?: { current_dir?: string; project_dir?: string };
+  model?: { display_name?: string };
+  effort?: { level?: string };
   context_window?: { used_percentage?: number | null; total_input_tokens?: number };
   rate_limits?: { five_hour?: Limit; seven_day?: Limit };
 };
@@ -16,14 +18,6 @@ export type Thresholds = {
   context: BarThresholds;
   fiveHour: BarThresholds;
   sevenDay: BarThresholds;
-};
-export type Repo = {
-  branch: string;
-  staged: number;
-  untracked: number;
-  added: number;
-  modified: number;
-  deleted: number;
 };
 
 const RESET = "\x1b[00m";
@@ -84,18 +78,14 @@ export function resetTime(epochSeconds: number): string {
   return at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function left(repo: Repo | null): string {
-  if (!repo) return "";
-  const count = (name: string, n: number) =>
-    `${label(`${name}:`)} ${paint(n > 0 ? "2;36" : "2;90", String(n))}`;
-  return [
-    `${paint("01;35", repo.branch)} ${paint("2;90", "|")}`,
-    count("S", repo.staged),
-    count("U", repo.untracked),
-    count("A", repo.added),
-    count("M", repo.modified),
-    count("D", repo.deleted),
-  ].join(" ");
+export const left = (branch: string | null) => (branch ? paint("01;35", branch) : "");
+
+// "Opus 5.5 (high)": the model, and its effort when set.
+export function right(input: Input): string {
+  const model = input.model?.display_name;
+  if (!model) return "";
+  const effort = input.effort?.level;
+  return label(model) + (effort ? ` ${paint("2;90", `(${effort})`)}` : "");
 }
 
 export function middle(
@@ -128,22 +118,33 @@ export function middle(
 
 export const visible = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "").length;
 
-// The whole line for a terminal `columns` wide, less a margin against wrapping.
+// Claude Code keeps two columns free on each side of the status line and cuts a longer one short.
+const MARGIN = 4;
+
+// The whole line for a terminal `columns` wide, the model flush with its right edge.
 export function render(
   input: Input,
-  repo: Repo | null,
+  branch: string | null,
   columns: number,
   t: Thresholds = THRESHOLDS,
 ): string {
-  const width = Math.max(40, columns - 10);
-  const l = left(repo);
+  const width = Math.max(40, columns - MARGIN);
+  const l = left(branch);
+  let r = right(input);
+  const fits = (mid: string) =>
+    visible(l) + visible(mid) + (r ? visible(r) + 1 : 0) + 1 <= width;
+  const stages = [[10, true], [5, true], [5, false]] as const;
   let mid = "";
-  for (const [barWidth, showReset] of [[10, true], [5, true], [5, false]] as const) {
+  for (const [barWidth, showReset] of stages) {
     mid = middle(input, barWidth, showReset, t);
-    if (visible(l) + visible(mid) + 1 <= width) break;
+    if (fits(mid)) break;
   }
-  const start = Math.max(Math.floor((width - visible(mid)) / 2), visible(l) + 1);
-  return l + " ".repeat(start - visible(l)) + mid;
+  if (!fits(mid)) r = "";
+  const end = r ? width - visible(r) - 1 : width;
+  const centred = Math.floor((width - visible(mid)) / 2);
+  const start = Math.max(Math.min(centred, end - visible(mid)), visible(l) + 1);
+  const line = l + " ".repeat(start - visible(l)) + mid;
+  return r ? line + " ".repeat(Math.max(1, width - visible(r) - visible(line))) + r : line;
 }
 
 function git(dir: string, ...args: string[]): string | null {
@@ -151,28 +152,14 @@ function git(dir: string, ...args: string[]): string | null {
   return r.status === 0 ? r.stdout.trim() : null;
 }
 
-export function repo(dir: string): Repo | null {
+// The branch, or the commit when detached; null outside a repo.
+export function branch(dir: string): string | null {
   if (git(dir, "rev-parse", "--show-toplevel") === null) return null;
-  const files = (...args: string[]) => (git(dir, ...args) || "").split("\n").filter(Boolean);
-  return {
-    branch: git(dir, "branch", "--show-current") || git(dir, "rev-parse", "--short", "HEAD") || "",
-    staged: files("diff", "--cached", "--name-only").length,
-    untracked: files("ls-files", "--others", "--exclude-standard").length,
-    added: files("diff", "--cached", "--name-only", "--diff-filter=A").length,
-    // S and A (a part of S) count the index; U, M and D the working tree, each file in one.
-    modified: files("diff", "--name-only", "--diff-filter=d").length,
-    deleted: files("diff", "--name-only", "--diff-filter=D").length,
-  };
+  return git(dir, "branch", "--show-current") || git(dir, "rev-parse", "--short", "HEAD") || "";
 }
 
-// The status line's input has no width, so $COLUMNS, else `tput cols`, else 120.
-function columns(): number {
-  const tput = spawnSync("tput", ["cols"], {
-    encoding: "utf8",
-    stdio: ["inherit", "pipe", "ignore"],
-  });
-  return Number(process.env.COLUMNS) || Number(tput.stdout) || 120;
-}
+// Claude Code sets $COLUMNS to the terminal's width; the script can't read the terminal itself.
+const columns = () => Number(process.env.COLUMNS) || 120;
 
 async function main() {
   const input = (await Bun.stdin.json()) as Input;
@@ -182,7 +169,7 @@ async function main() {
   try {
     config = project ? load(project) : null;
   } catch {}
-  console.log(render(input, cwd ? repo(cwd) : null, columns(), thresholds(config).set));
+  console.log(render(input, cwd ? branch(cwd) : null, columns(), thresholds(config).set));
 }
 
 if (import.meta.main) main().catch(() => {});
