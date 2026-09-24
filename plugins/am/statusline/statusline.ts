@@ -3,7 +3,7 @@
 // too narrow it shrinks the bars, then drops the 5-hour reset time, then the model. The Harness
 // config can set the percentages at which each bar turns yellow and red.
 import { spawnSync } from "node:child_process";
-import { type Config, load } from "../lib/config";
+import { type BarThresholds, readConfig, THRESHOLDS, type Thresholds } from "../lib/config";
 
 type Limit = { used_percentage?: number; resets_at?: number };
 export type Input = {
@@ -13,56 +13,10 @@ export type Input = {
   context_window?: { used_percentage?: number | null; total_input_tokens?: number };
   rate_limits?: { five_hour?: Limit; seven_day?: Limit };
 };
-export type BarThresholds = { yellow: number; red: number };
-export type Thresholds = {
-  context: BarThresholds;
-  fiveHour: BarThresholds;
-  sevenDay: BarThresholds;
-};
 
 const RESET = "\x1b[00m";
 const paint = (code: string, text: string) => `\x1b[${code}m${text}${RESET}`;
 const label = (text: string) => paint("2;37", text);
-
-export const THRESHOLDS: Thresholds = {
-  context: { yellow: 15, red: 20 },
-  fiveHour: { yellow: 70, red: 85 },
-  sevenDay: { yellow: 80, red: 95 },
-};
-
-// The defaults, with the valid `statusLine` thresholds from the Harness config over them, and
-// what's wrong with the rest.
-export function thresholds(config: Config | null): { set: Thresholds; problems: string[] } {
-  const set = structuredClone(THRESHOLDS);
-  const problems: string[] = [];
-  const given = config?.statusLine;
-  if (!given || typeof given !== "object") return { set, problems };
-  const percent = (v: unknown): v is number => typeof v === "number" && v >= 0 && v <= 100;
-  for (const [key, value] of Object.entries(given)) {
-    const where = `statusLine.${key}`;
-    if (!(key in set)) {
-      problems.push(`${where} is not a bar (${Object.keys(set).join(", ")}); ignored`);
-      continue;
-    }
-    if (!value || typeof value !== "object" || Array.isArray(value)) {
-      problems.push(`${where} is not an object of yellow and red; the defaults are used`);
-      continue;
-    }
-    const t = { ...set[key as keyof Thresholds] };
-    for (const [color, pct] of Object.entries(value)) {
-      if (color !== "yellow" && color !== "red")
-        problems.push(`${where}.${color} is not yellow or red; ignored`);
-      else if (!percent(pct))
-        problems.push(`${where}.${color} is not a percentage from 0 to 100; the default is used`);
-      else t[color] = pct;
-    }
-    const { yellow, red } = t;
-    if (yellow > red)
-      problems.push(`${where}: yellow (${yellow}) is above red (${red}); the defaults are used`);
-    else set[key as keyof Thresholds] = t;
-  }
-  return { set, problems };
-}
 
 // A bar and its percentage: dim green, yellow from `yellow`%, red from `red`%.
 export function bar(percent: number, width: number, { yellow, red }: BarThresholds): string {
@@ -165,11 +119,8 @@ async function main() {
   const input = (await Bun.stdin.json()) as Input;
   const cwd = input.workspace?.current_dir;
   const project = input.workspace?.project_dir ?? cwd;
-  let config = null;
-  try {
-    config = project ? load(project) : null;
-  } catch {}
-  console.log(render(input, cwd ? branch(cwd) : null, columns(), thresholds(config).set));
+  const t = (project && readConfig(project).statusLine) || THRESHOLDS;
+  console.log(render(input, cwd ? branch(cwd) : null, columns(), t));
 }
 
 if (import.meta.main) main().catch(() => {});

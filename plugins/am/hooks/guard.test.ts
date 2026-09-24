@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { blocks, check, leak, parse, secretFile } from "./guard";
+import { check, leak, parse, secretFile } from "./guard";
 
 const HOOK = join(import.meta.dir, "guard.ts");
 
@@ -175,32 +175,13 @@ describe("secretFile", () => {
   });
 });
 
-describe("blocks", () => {
-  const config = {
-    guard: {
-      block: [
-        { pattern: "\\bterraform destroy\\b", reason: "destroys infrastructure" },
-        { pattern: "(", reason: "invalid regex" },
-        { pattern: "x" },
-        null,
-      ],
-    },
-  };
+describe("extra blocks", () => {
+  const extra = [{ pattern: /\bterraform destroy\b/, reason: "destroys infrastructure" }];
 
-  test("keeps well-formed entries only", () => {
-    expect(blocks(config).map((b) => b.reason)).toEqual(["destroys infrastructure"]);
-  });
-
-  test("blocks a matching command, on top of the built-in rules", () => {
-    expect(check("cd infra && terraform destroy", blocks(config))).toBe("destroys infrastructure");
-    expect(check("terraform plan", blocks(config))).toBeNull();
-    expect(check("git push -f", blocks(config))).not.toBeNull();
-  });
-
-  test("ignores a config without guard blocks", () => {
-    expect(blocks({})).toEqual([]);
-    expect(blocks(null)).toEqual([]);
-    expect(blocks({ guard: { block: "x" } })).toEqual([]);
+  test("block a matching command, on top of the built-in rules", () => {
+    expect(check("cd infra && terraform destroy", extra)).toBe("destroys infrastructure");
+    expect(check("terraform plan", extra)).toBeNull();
+    expect(check("git push -f", extra)).not.toBeNull();
   });
 });
 

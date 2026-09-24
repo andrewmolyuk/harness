@@ -7,14 +7,13 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { ALLOW, isEnvFile } from "../githooks/no-secrets";
-import { type Config, load } from "../lib/config";
+import { type Block, readConfig } from "../lib/config";
 
 type Input = {
   cwd?: string;
   tool_name?: string;
   tool_input?: { command?: string; file_path?: string; path?: string; glob?: string };
 };
-export type Block = { pattern: RegExp; reason: string };
 
 const WRAPPERS = new Set(["sudo", "doas", "env", "command", "exec", "nohup", "time", "xargs"]);
 const SHELLS = new Set(["sh", "bash", "zsh", "dash"]);
@@ -173,29 +172,6 @@ function program(name: string, args: string[]): string | null {
   }
 }
 
-// The project's extra blocks: `{ "guard": { "block": [{ "pattern", "reason" }] } }`, each
-// pattern a regex on the command text. Malformed entries are skipped.
-export function blocks(config: Config | null): Block[] {
-  const list = (config?.guard as { block?: unknown } | undefined)?.block;
-  if (!Array.isArray(list)) return [];
-  return list.flatMap((b: { pattern?: unknown; reason?: unknown } | null) => {
-    if (typeof b?.pattern !== "string" || typeof b.reason !== "string") return [];
-    try {
-      return [{ pattern: new RegExp(b.pattern), reason: b.reason }];
-    } catch {
-      return [];
-    }
-  });
-}
-
-function projectBlocks(dir: string | undefined): Block[] {
-  try {
-    return dir ? blocks(load(dir)) : [];
-  } catch {
-    return [];
-  }
-}
-
 // Why the command is dangerous, or null when it isn't.
 export function check(command: string, extra: Block[] = []): string | null {
   for (const { pattern, reason } of extra) if (pattern.test(command)) return reason;
@@ -311,7 +287,7 @@ async function main() {
   let reason: string | null = null;
   let secret: string | null = null;
   if (tool_name === "Bash" && tool_input?.command) {
-    reason = check(tool_input.command, projectBlocks(project));
+    reason = check(tool_input.command, project ? readConfig(project).guard : []);
     if (!reason) secret = leak(tool_input.command, cwd);
   } else if (tool_name === "Read" || tool_name === "Grep") {
     const paths = [tool_input?.file_path, tool_input?.path, tool_input?.glob];

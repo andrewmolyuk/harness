@@ -3,10 +3,8 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import schema from "../harness.schema.json";
-import { CREATED, DEFAULTS, ensure, SCHEMA } from "./harness-config";
-
-const HOOK = join(import.meta.dir, "harness-config.ts");
+import { SCHEMA, WRITTEN } from "../lib/config";
+import { CREATED, ensure } from "./harness-config";
 
 describe("ensure", () => {
   let dir: string;
@@ -21,16 +19,9 @@ describe("ensure", () => {
   test("creates it at the repo root, from a folder inside, with every setting off", () => {
     mkdirSync(join(dir, "sub"));
     expect(ensure(join(dir, "sub"))).toEqual([CREATED]);
-    expect(JSON.parse(config())).toEqual(DEFAULTS);
+    expect(JSON.parse(config())).toEqual(WRITTEN);
     expect(existsSync(join(dir, "sub", ".harness.json"))).toBe(false);
     expect(ensure(dir)).toEqual([]);
-  });
-
-  test("the defaults match the schema, and point at it", () => {
-    expect(DEFAULTS.$schema).toBe(SCHEMA);
-    expect(SCHEMA).toEndWith("/plugins/am/harness.schema.json");
-    for (const key of Object.keys(DEFAULTS)) expect(schema.properties).toHaveProperty(key);
-    expect("sessionReview" in DEFAULTS).toBe(false);
   });
 
   test("adds only the missing keys, leaving the user's lines as they were", () => {
@@ -50,7 +41,7 @@ describe("ensure", () => {
     expect(keys).toEqual(["$schema", "statusLine", "guard", "gitHooks", "guidelines"]);
     writeFileSync(file(), "{}");
     ensure(dir);
-    expect(JSON.parse(config())).toEqual(DEFAULTS);
+    expect(JSON.parse(config())).toEqual(WRITTEN);
   });
 
   test("leaves a complete one byte for byte", () => {
@@ -61,10 +52,10 @@ describe("ensure", () => {
     expect(config()).toBe(text);
   });
 
-  test("leaves one that isn't a JSON object, and says so", () => {
+  test("leaves one that isn't a JSON object", () => {
     for (const text of ["{", "[]", "null"]) {
       writeFileSync(file(), text);
-      expect(ensure(dir)).toEqual([".harness.json is not a JSON object; left as it is"]);
+      expect(ensure(dir)).toEqual([]);
       expect(config()).toBe(text);
     }
   });
@@ -88,16 +79,5 @@ describe("ensure", () => {
     const outside = mkdtempSync(join(tmpdir(), "harness-config-"));
     expect(ensure(outside)).toEqual([]);
     expect(existsSync(join(outside, ".harness.json"))).toBe(false);
-  });
-
-  test("runs as a SessionStart hook and reports what it did to Claude", () => {
-    const proc = spawnSync("bun", [HOOK], {
-      input: JSON.stringify({ cwd: dir }),
-      encoding: "utf8",
-      env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
-    });
-    expect(proc.status).toBe(0);
-    expect(proc.stdout).toBe(`am harness config:\n${CREATED}\n`);
-    expect(JSON.parse(config())).toEqual(DEFAULTS);
   });
 });

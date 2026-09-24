@@ -1,18 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  bar,
-  type Input,
-  branch,
-  render,
-  resetTime,
-  THRESHOLDS,
-  thresholds,
-  visible,
-} from "./statusline";
+import { THRESHOLDS } from "../lib/config";
+import { bar, type Input, branch, render, resetTime, visible } from "./statusline";
 
 const plain = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
 const at = (...args: [number, number, number, number, number]) =>
@@ -40,45 +32,28 @@ describe("bar", () => {
 });
 
 describe("thresholds", () => {
-  test("takes the ones the config sets, and the defaults for the rest", () => {
-    expect(thresholds(null)).toEqual({ set: THRESHOLDS, problems: [] });
-    expect(thresholds({ statusLine: true })).toEqual({ set: THRESHOLDS, problems: [] });
-    const { set } = thresholds({ statusLine: { context: { red: 30 }, sevenDay: { red: 100 } } });
-    expect(set).toEqual({
-      ...THRESHOLDS,
-      context: { yellow: 15, red: 30 },
-      sevenDay: { yellow: 80, red: 100 },
-    });
-    expect(THRESHOLDS.context.red).toBe(20);
-  });
-
-  test("uses the defaults in place of wrong ones, and names each", () => {
-    const statusLine = {
-      week: {},
-      fiveHour: 5,
-      sevenDay: { blue: 1, red: "x", yellow: 101 },
-      context: { yellow: 20, red: 15 },
-    };
-    expect(thresholds({ statusLine })).toEqual({
-      set: THRESHOLDS,
-      problems: [
-        "statusLine.week is not a bar (context, fiveHour, sevenDay); ignored",
-        "statusLine.fiveHour is not an object of yellow and red; the defaults are used",
-        "statusLine.sevenDay.blue is not yellow or red; ignored",
-        "statusLine.sevenDay.red is not a percentage from 0 to 100; the default is used",
-        "statusLine.sevenDay.yellow is not a percentage from 0 to 100; the default is used",
-        "statusLine.context: yellow (20) is above red (15); the defaults are used",
-      ],
-    });
-  });
-
   test("colour the bars", () => {
-    const t = thresholds({ statusLine: { context: { yellow: 20, red: 40 } } });
+    const t = { ...THRESHOLDS, context: { yellow: 20, red: 40 } };
     const ctx = (used: number) =>
-      render({ context_window: { used_percentage: used } }, null, 120, t.set).trim();
+      render({ context_window: { used_percentage: used } }, null, 120, t).trim();
     expect(ctx(19)).toContain("\x1b[2;32m");
     expect(ctx(20)).toContain("\x1b[2;33m");
     expect(ctx(40)).toContain("\x1b[2;31m");
+  });
+
+  test("the script takes them from the Harness config", () => {
+    const dir = mkdtempSync(join(tmpdir(), "statusline-"));
+    const run = () =>
+      spawnSync("bun", [join(import.meta.dir, "statusline.ts")], {
+        input: JSON.stringify({
+          workspace: { project_dir: dir },
+          context_window: { used_percentage: 7 },
+        }),
+        encoding: "utf8",
+      }).stdout;
+    expect(run()).toContain("\x1b[2;32m");
+    writeFileSync(join(dir, ".harness.json"), `{"statusLine":{"context":{"yellow":5,"red":10}}}`);
+    expect(run()).toContain("\x1b[2;33m");
   });
 });
 

@@ -7,7 +7,7 @@ import { spawn } from "node:child_process";
 import { appendFileSync, existsSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { load, repoRoot } from "../lib/config";
+import { readConfig } from "../lib/config";
 
 type Input = { cwd?: string; transcript_path?: string };
 type Block = { type?: string; text?: string };
@@ -20,16 +20,6 @@ const PROMPT = `The conversation that just ended is on stdin. Use the am:glossar
 skills to record what it settled in .about/. Nobody can answer questions: record only what the
 conversation clearly agreed; put anything contested or unanswered in the glossary's
 ## Unresolved or in a proposed ADR. Change nothing else, and end with one line per change.`;
-
-// `sessionReview` from the Harness config if it's true or false, else whether .about/ exists at
-// the repo root. A broken config counts as none: at session end there is no one to tell.
-export function wanted(root: string): boolean {
-  let setting: unknown;
-  try {
-    setting = load(root)?.sessionReview;
-  } catch {}
-  return typeof setting === "boolean" ? setting : existsSync(join(root, ".about"));
-}
 
 // User and assistant text only: no tool calls or tool results.
 export function conversation(jsonl: string): string {
@@ -61,8 +51,9 @@ async function main() {
   const project = process.env.CLAUDE_PROJECT_DIR ?? input.cwd;
   const transcript_path = input.transcript_path;
   if (!project || !transcript_path) return;
-  const root = repoRoot(project) ?? project;
-  if (!wanted(root) || !existsSync(transcript_path)) return;
+  // A problem with the config is left to the next session start: there is no one to tell now.
+  const { root, sessionReview } = readConfig(project);
+  if (!sessionReview || !existsSync(transcript_path)) return;
 
   const convo = conversation(await Bun.file(transcript_path).text());
   if (convo.length < MIN_CHARS) return;

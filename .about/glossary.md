@@ -53,7 +53,8 @@ whether to load the Guidelines, and whether to run the Session review. The plugi
 in every repo, and adds the keys it lacks, each at a value that changes nothing; a project
 switches on the Status line, Git hooks and Guidelines by changing a value.
 _Avoid_: harness file, settings
-_In code_: `config.ts` reads it, `harness-config.ts` creates and completes it
+_In code_: `config.ts` reads and checks it (`readConfig`), `harness-config.ts` creates and
+completes it
 
 **Project folder**:
 The folder Claude Code starts a session in, where its per-project files such as
@@ -74,9 +75,9 @@ Harness config can add blocks to its built-in rules, never lift one.
 _Avoid_: blocker, firewall
 
 **Sync**:
-The `am` plugin's Claude Code hooks that, at session start, bring a repo's Git hooks and Status
-line in line with the Harness config, touching only what they marked as their own.
-_In code_: `git-hooks.ts`, `status-line.ts`
+The `am` plugin's steps that, at session start, bring a repo's Git hooks and Status line in line
+with the Harness config, touching only what they marked as their own.
+_In code_: `git-hooks.ts`, `status-line.ts`, run by `session-start.ts`
 
 **Status line**:
 The line Claude Code shows under the prompt; the `am` plugin ships its own, which the Sync

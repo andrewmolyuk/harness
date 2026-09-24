@@ -1,16 +1,10 @@
-// SessionStart hook: in a project whose .harness.json has `"statusLine": true` or thresholds,
-// point Claude Code's status line at the plugin's script, in the project's
-// .claude/settings.local.json (ADR 0009). It writes and removes only a status line marked as its
-// own, rewriting it each session since the script's path changes with every plugin version.
-// Problems, wrong thresholds among them, are reported to Claude; anything missing (the config,
-// git) means it quietly does nothing.
+// Session start step: where the Harness config switches the Status line on, point Claude Code's
+// status line at the plugin's script, in the project's .claude/settings.local.json (ADR 0009).
+// It writes and removes only a status line marked as its own, rewriting it each session since
+// the script's path changes with every plugin version.
 import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { load } from "../lib/config";
-import { thresholds } from "../statusline/statusline";
-
-type Input = { cwd?: string };
 
 const MARKER = "# managed by am";
 const SCRIPT = join(import.meta.dir, "..", "statusline", "statusline.ts");
@@ -35,24 +29,10 @@ function ignore(dir: string) {
   appendFileSync(file, `${current && !current.endsWith("\n") ? "\n" : ""}/${SETTINGS}\n`);
 }
 
-// Brings the project's status line in line with the config; returns what Claude should be told.
-export function sync(dir: string, script = SCRIPT): string[] {
-  let config;
-  try {
-    config = load(dir);
-  } catch (e) {
-    return [`${(e as Error).message}; status line left as it is`];
-  }
-  if (!config) return [];
-  // An object of thresholds also switches the Status line on.
-  const on = config.statusLine ?? false;
-  if (typeof on !== "boolean" && (typeof on !== "object" || Array.isArray(on) || !on))
-    return [".harness.json: statusLine is not true, false or an object of thresholds"];
-  const report = thresholds(config).problems.map((p) => `.harness.json: ${p}`);
-  return [...report, ...install(dir, on !== false, script)];
-}
-
-function install(dir: string, want: boolean, script: string): string[] {
+// Brings the project's status line in line with `want`, whether the Harness config switches it
+// on; without it, leaves it as it is. Returns what Claude should be told.
+export function sync(dir: string, want?: boolean, script = SCRIPT): string[] {
+  if (want === undefined) return [];
   const file = join(dir, SETTINGS);
   let settings: Record<string, unknown> = {};
   if (existsSync(file)) {
@@ -79,12 +59,3 @@ function install(dir: string, want: boolean, script: string): string[] {
   if (created) ignore(dir);
   return [];
 }
-
-async function main() {
-  const { cwd } = (await Bun.stdin.json()) as Input;
-  const project = process.env.CLAUDE_PROJECT_DIR ?? cwd;
-  const report = project ? sync(project) : [];
-  if (report.length) console.log(`am status line:\n${report.join("\n")}`);
-}
-
-if (import.meta.main) main().catch(() => {});

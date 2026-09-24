@@ -1,7 +1,6 @@
-// SessionStart hook: in a project with .harness.json, generate the Git hooks its `gitHooks`
-// lists into the repo's hooks folder and copy the Built-in checks beside them (ADR 0007).
-// It writes and removes only hooks marked as its own; problems are reported to Claude, and
-// anything missing (git, a repo, the config) means it quietly does nothing.
+// Session start step: generate the Git hooks the Harness config's `gitHooks` lists into the
+// repo's hooks folder and copy the Built-in checks beside them (ADR 0007). It writes and
+// removes only hooks marked as its own; anything missing (git, a repo) means it does nothing.
 import { spawnSync } from "node:child_process";
 import {
   chmodSync,
@@ -13,45 +12,10 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import { load } from "../lib/config";
+import { BUILTINS, GIT_HOOKS, type GitHook } from "../lib/config";
 
-type Input = { cwd?: string };
-type GitHook = (typeof GIT_HOOKS)[number];
-
-export const GIT_HOOKS = ["pre-commit", "commit-msg", "pre-push"] as const;
-export const BUILTINS: Record<string, GitHook> = {
-  "adr-immutable": "pre-commit",
-  "no-secrets": "pre-commit",
-  "conventional-commits": "commit-msg",
-  "no-ai-coauthor": "commit-msg",
-  "linear-history": "pre-push",
-};
 const MARKER = "# managed by am";
 const CHECKS = join(import.meta.dir, "..", "githooks");
-
-// The entries per Git hook, or what's wrong with `gitHooks`.
-export function parse(gitHooks: unknown): { hooks: Map<GitHook, string[]>; errors: string[] } {
-  const hooks = new Map<GitHook, string[]>();
-  const errors: string[] = [];
-  if (gitHooks === undefined) return { hooks, errors };
-  if (!gitHooks || typeof gitHooks !== "object" || Array.isArray(gitHooks))
-    return { hooks, errors: ["gitHooks is not an object"] };
-  for (const [hook, entries] of Object.entries(gitHooks)) {
-    if (!GIT_HOOKS.includes(hook as GitHook)) {
-      errors.push(`${hook} is not a supported Git hook (${GIT_HOOKS.join(", ")})`);
-    } else if (!Array.isArray(entries) || !entries.every((e) => typeof e === "string" && e)) {
-      errors.push(`${hook} is not a list of commands`);
-    } else {
-      for (const e of entries as string[]) {
-        const owner = e.startsWith("am:") ? BUILTINS[e.slice(3)] : hook;
-        if (!owner) errors.push(`${e} is not a Built-in check`);
-        else if (owner !== hook) errors.push(`${e} belongs to ${owner}, not ${hook}`);
-      }
-      hooks.set(hook as GitHook, entries as string[]);
-    }
-  }
-  return { hooks, errors };
-}
 
 const quote = (s: string) => `'${s.replaceAll("'", `'\\''`)}'`;
 
@@ -85,18 +49,10 @@ function git(dir: string, ...args: string[]) {
   return spawnSync("git", ["-C", dir, ...args], { encoding: "utf8" });
 }
 
-// Brings the repo's Git hooks in line with the config; returns what Claude should be told.
-export function sync(dir: string): string[] {
-  let config;
-  try {
-    config = load(dir);
-  } catch (e) {
-    return [`${(e as Error).message}; Git hooks left as they are`];
-  }
-  if (!config) return [];
-  const { hooks, errors } = parse(config.gitHooks);
-  if (errors.length)
-    return [...errors.map((e) => `.harness.json: ${e}`), "Git hooks left as they are"];
+// Brings the repo's Git hooks in line with `hooks`, the Harness config's `gitHooks`; without it,
+// leaves them as they are. Returns what Claude should be told.
+export function sync(dir: string, hooks?: Map<GitHook, string[]>): string[] {
+  if (!hooks) return [];
   const path = git(dir, "rev-parse", "--git-path", "hooks");
   if (path.status !== 0) return [];
   const folder = resolve(dir, path.stdout.trim());
@@ -126,12 +82,3 @@ export function sync(dir: string): string[] {
     git(dir, "config", "--local", "pull.rebase", "true");
   return report;
 }
-
-async function main() {
-  const { cwd } = (await Bun.stdin.json()) as Input;
-  const project = process.env.CLAUDE_PROJECT_DIR ?? cwd;
-  const report = project ? sync(project) : [];
-  if (report.length) console.log(`am Git hooks:\n${report.join("\n")}`);
-}
-
-if (import.meta.main) main().catch(() => {});

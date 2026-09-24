@@ -1,26 +1,12 @@
-// SessionStart hook: at the root of the git repo, create .harness.json with every setting off,
+// Session start step: at the root of the git repo, create .harness.json with every setting off,
 // or add the top-level keys an existing one lacks, leaving its values and their order alone
 // (ADR 0016). Running at all means the am plugin is enabled here, so it needs no other opt-in.
 // It also names an .about/ or .harness.json left in the Project folder below the root, which
-// nothing reads (ADR 0018). Problems are reported to Claude; outside a git repo it quietly does
-// nothing.
+// nothing reads (ADR 0018). A file that isn't a JSON object is left alone for `readConfig`
+// to report; outside a git repo it does nothing.
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
-import { repoRoot } from "../lib/config";
-
-type Input = { cwd?: string };
-
-export const SCHEMA =
-  "https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json";
-// Each value keeps the hook it drives doing what it does without the key. `sessionReview` is
-// left out: without it the Session review runs where .about/ exists, which false would stop.
-export const DEFAULTS: Record<string, unknown> = {
-  $schema: SCHEMA,
-  guard: { block: [] },
-  statusLine: false,
-  gitHooks: {},
-  guidelines: false,
-};
+import { repoRoot, WRITTEN } from "../lib/config";
 
 // The file holds only what changes nothing, so the message says where the other options are.
 export const CREATED =
@@ -45,7 +31,7 @@ function stray(dir: string, root: string): string[] {
 
 function complete(file: string): string[] {
   if (!existsSync(file)) {
-    write(file, DEFAULTS);
+    write(file, WRITTEN);
     return [CREATED];
   }
   const text = readFileSync(file, "utf8");
@@ -53,11 +39,10 @@ function complete(file: string): string[] {
   try {
     config = JSON.parse(text);
   } catch {}
-  if (!config || typeof config !== "object" || Array.isArray(config))
-    return [".harness.json is not a JSON object; left as it is"];
-  const missing = Object.keys(DEFAULTS).filter((key) => !(key in config));
+  if (!config || typeof config !== "object" || Array.isArray(config)) return [];
+  const missing = Object.keys(WRITTEN).filter((key) => !(key in config));
   if (!missing.length) return [];
-  if (!Object.keys(config).length) write(file, DEFAULTS);
+  if (!Object.keys(config).length) write(file, WRITTEN);
   else writeFileSync(file, insert(text, missing));
   return [`.harness.json: added ${missing.join(", ")}`];
 }
@@ -67,7 +52,7 @@ function complete(file: string): string[] {
 function insert(text: string, missing: string[]): string {
   const indent = /\n([ \t]+)"/.exec(text)?.[1] ?? "  ";
   const entry = (key: string) =>
-    `${indent}${JSON.stringify(key)}: ${JSON.stringify(DEFAULTS[key])}`;
+    `${indent}${JSON.stringify(key)}: ${JSON.stringify(WRITTEN[key])}`;
   const rest = missing.filter((key) => key !== "$schema");
   let out = text;
   if (rest.length) {
@@ -85,12 +70,3 @@ function insert(text: string, missing: string[]): string {
 function write(file: string, config: object) {
   writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
 }
-
-async function main() {
-  const { cwd } = (await Bun.stdin.json()) as Input;
-  const project = process.env.CLAUDE_PROJECT_DIR ?? cwd;
-  const report = project ? ensure(project) : [];
-  if (report.length) console.log(`am harness config:\n${report.join("\n")}`);
-}
-
-if (import.meta.main) main().catch(() => {});
