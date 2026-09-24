@@ -9,6 +9,8 @@
 - `plugins/am/hooks/` — `hooks.json` and the hook scripts it runs.
 - `plugins/am/githooks/` — Built-in checks, copied into a project's Git hooks folder: they
   import nothing from the plugin.
+- `plugins/am/guidelines/` — the Guidelines: `index.md`, printed at session start, and the
+  Guideline files it names.
 - `plugins/am/statusline/` — the Status line script the Sync points Claude Code at.
 - `plugins/am/lib/` — code shared by hooks, and the preload `bunfig.toml` runs before every test.
 - `plugins/am/harness.schema.json` — the schema of a project's `.harness.json`.

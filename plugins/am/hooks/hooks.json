@@ -1,5 +1,5 @@
 {
-  "description": "Block destructive git and shell commands, and tool calls that would leak a secret into Claude's context; create or complete the repo's .harness.json with every setting off; generate the Git hooks .harness.json lists and install its status line; after a session where sessionReview is on (by default, where .about/ exists), review it with the glossary and adr skills",
+  "description": "Block destructive git and shell commands, and tool calls that would leak a secret into Claude's context; create or complete the repo's .harness.json with every setting off; generate the Git hooks .harness.json lists, install its status line and, with guidelines on, add the plugin's working rules to the context; after a session where sessionReview is on (by default, where .about/ exists), review it with the glossary and adr skills",
   "hooks": {
     "SessionStart": [
       {
@@ -15,6 +15,10 @@
           {
             "type": "command",
             "command": "if command -v bun >/dev/null 2>&1; then bun \"${CLAUDE_PLUGIN_ROOT}/hooks/status-line.ts\"; fi"
+          },
+          {
+            "type": "command",
+            "command": "if command -v bun >/dev/null 2>&1; then bun \"${CLAUDE_PLUGIN_ROOT}/hooks/guidelines.ts\"; fi"
           }
         ]
       }

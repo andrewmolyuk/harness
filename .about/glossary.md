@@ -3,7 +3,7 @@
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
 files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), find
 the cause of a Bug before fixing it, learn from past sessions in a Retro, sync its Git hooks,
-show a Status line, and guard it against destructive commands and Leaks.
+show a Status line, load its Guidelines, and guard it against destructive commands and Leaks.
 
 ## Glossary
 
@@ -47,10 +47,10 @@ _Avoid_: setup; environment, which here means environment settings (an Env file)
 
 **Harness config**:
 The repo's `.harness.json`: its settings for the `am` hooks — extra commands for the Guard
-to block, the Git hooks to generate, whether to install the Status line and its Thresholds, and
-whether to run the Session review. The plugin creates it in every repo, and adds the keys it
-lacks, each at a value that changes nothing; a project switches on the Status line and Git hooks
-by changing a value.
+to block, the Git hooks to generate, whether to install the Status line and its Thresholds,
+whether to load the Guidelines, and whether to run the Session review. The plugin creates it
+in every repo, and adds the keys it lacks, each at a value that changes nothing; a project
+switches on the Status line, Git hooks and Guidelines by changing a value.
 _Avoid_: harness file, settings
 _In code_: `config.ts` reads it, `harness-config.ts` creates and completes it
 
@@ -101,6 +101,17 @@ The `am` plugin's Claude Code hook that, when a session ends in a repo whose Har
 asks for it (by default, one with `.about/` at its root), has a separate headless session
 record in the glossary and ADRs what the conversation settled.
 _Avoid_: session-end review
+
+**Guidelines**:
+Working rules the `am` plugin ships and adds to Claude's context at session start where the
+Harness config asks for them: a short index, always there, that names the Guideline files
+Claude reads when a task calls for one.
+_Avoid_: knowledge, rules (alone); "CLAUDE.md", which Claude Code loads itself
+_In code_: `guidelines.ts`, `guidelines/`
+
+**Guideline file**:
+One of the Guidelines' files beyond the index (principles, a language's conventions); Claude
+reads it when a task calls for it, never at session start.
 
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the

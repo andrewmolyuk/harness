@@ -53,6 +53,10 @@
         }
       ]
     },
+    "guidelines": {
+      "description": "Add the am plugin's working rules to Claude's context at session start: a short index naming the files Claude reads when a task calls for one.",
+      "type": "boolean"
+    },
     "sessionReview": {
       "description": "Review each finished conversation into .about/ with the glossary and adr skills. Without it, the review runs where .about/ exists.",
       "type": "boolean"

@@ -10,8 +10,11 @@ Claude's context (`cat .env`, `printenv`, reading `~/.ssh/id_*`, `gh auth token`
 them to the user. At session start, a hook creates `.harness.json` at the repo root with every
 setting off, or adds the keys an existing one lacks without changing its values, and the Sync
 hooks generate the Git hooks it lists and, with `statusLine` on, install the plugin's Status
-line (branch, file counts, context and rate-limit usage) in `.claude/settings.local.json`. All
-hooks need `bun`.
+line (branch, file counts, context and rate-limit usage) in `.claude/settings.local.json`. With
+`"guidelines": true`, a hook adds the plugin's Guidelines to Claude's context at session start:
+a short index, `plugins/am/guidelines/index.md`, that names the Guideline files Claude reads
+when a task calls for one (`principles.md`); reading one may ask for permission, as they sit in
+the plugin's folder. All hooks need `bun`.
 
 `.harness.json` configures them; switch a hook on by changing its value. The Guard can block
 more commands but never fewer; each Git hook runs its entries in order, Built-in checks
@@ -24,6 +27,7 @@ and `sevenDay` (80, 95):
   "guard": { "block": [{ "pattern": "\\bterraform destroy\\b", "reason": "destroys infra" }] },
   "statusLine": { "context": { "yellow": 20, "red": 40 } },
   "sessionReview": false,
+  "guidelines": true,
   "gitHooks": {
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
     "pre-commit": ["am:adr-immutable", "am:no-secrets", "bun run check"],
@@ -36,8 +40,9 @@ The Git hooks go into the repo's Git hooks folder, marked as the plugin's own; a
 already there is left alone. `am:linear-history` also sets `pull.rebase=true`. `am:no-secrets`
 stops a commit that adds an API key, token, private key or Env file, naming where, not what;
 `am:allow-secret` on a line lets a false alarm through, and on an Env file's first line, the
-file. For editor checks, set `$schema` to
-`https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`.
+file. The `.harness.json` the plugin creates points `$schema` at
+`https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`,
+which describes every option, so editors check the file and complete the options it leaves out.
 
 ## Skills
 

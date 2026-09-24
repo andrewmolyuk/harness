@@ -19,7 +19,13 @@ export const DEFAULTS: Record<string, unknown> = {
   guard: { block: [] },
   statusLine: false,
   gitHooks: {},
+  guidelines: false,
 };
+
+// The file holds only what changes nothing, so the message says where the other options are.
+export const CREATED =
+  "created .harness.json with every setting off; switch one on by changing its value. " +
+  "Every option, with what it does, is in the schema its $schema names; editors complete them.";
 
 // Creates or completes the repo's Harness config; returns what Claude should be told.
 export function ensure(dir: string): string[] {
@@ -40,7 +46,7 @@ function stray(dir: string, root: string): string[] {
 function complete(file: string): string[] {
   if (!existsSync(file)) {
     write(file, DEFAULTS);
-    return ["created .harness.json with every setting off"];
+    return [CREATED];
   }
   const text = readFileSync(file, "utf8");
   let config: unknown;
