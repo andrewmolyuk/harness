@@ -23,7 +23,12 @@ describe("sync", () => {
   });
 
   test("the schema allows it", () => {
-    expect(schema.properties.statusLine.type).toBe("boolean");
+    expect(schema.properties.statusLine.oneOf[0]).toEqual({ type: "boolean" });
+    expect(Object.keys(schema.properties.statusLine.oneOf[1].properties ?? {})).toEqual([
+      "context",
+      "fiveHour",
+      "sevenDay",
+    ]);
   });
 
   test("does nothing without .harness.json or without statusLine", () => {
@@ -54,6 +59,12 @@ describe("sync", () => {
     expect(settings()).toEqual({});
   });
 
+  test("switches it on with thresholds", () => {
+    config({ statusLine: { context: { yellow: 20, red: 40 } } });
+    sync(dir, "/v1/s.ts");
+    expect(settings().statusLine.command).toBe(command("/v1/s.ts"));
+  });
+
   test("leaves a status line it didn't write alone and says so", () => {
     own({ statusLine: { type: "command", command: "mine.sh" } });
     config({ statusLine: true });
@@ -67,7 +78,10 @@ describe("sync", () => {
 
   test("reports a wrong config or settings file", () => {
     config({ statusLine: "yes" });
-    expect(sync(dir)).toEqual([".harness.json: statusLine is not true or false"]);
+    const wrong = ".harness.json: statusLine is not true, false or an object of thresholds";
+    expect(sync(dir)).toEqual([wrong]);
+    config({ statusLine: [] });
+    expect(sync(dir)).toEqual([wrong]);
     config({ statusLine: true });
     own({});
     writeFileSync(join(dir, SETTINGS), "{");
@@ -92,6 +106,6 @@ describe("sync", () => {
       env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
     });
     expect(proc.status).toBe(0);
-    expect(proc.stdout).toContain("statusLine is not true or false");
+    expect(proc.stdout).toContain("statusLine is not true, false");
   });
 });

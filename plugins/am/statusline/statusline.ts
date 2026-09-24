@@ -1,14 +1,18 @@
 // The Status line (ADR 0009): the branch and staged, untracked, added and modified file counts
 // on the left, and context, 5-hour and 7-day usage bars centred on the line. When the line is
-// too narrow it shrinks the bars, then drops the 5-hour reset time.
+// too narrow it shrinks the bars, then drops the 5-hour reset time. The Harness config can set
+// the percentages at which each bar turns yellow and red.
 import { spawnSync } from "node:child_process";
+import { load } from "../lib/config";
 
 type Limit = { used_percentage?: number; resets_at?: number };
 export type Input = {
-  workspace?: { current_dir?: string };
+  workspace?: { current_dir?: string; project_dir?: string };
   context_window?: { used_percentage?: number | null };
   rate_limits?: { five_hour?: Limit; seven_day?: Limit };
 };
+export type Threshold = { yellow: number; red: number };
+export type Thresholds = { context: Threshold; fiveHour: Threshold; sevenDay: Threshold };
 export type Repo = {
   branch: string;
   staged: number;
@@ -20,6 +24,26 @@ export type Repo = {
 const RESET = "\x1b[00m";
 const paint = (code: string, text: string) => `\x1b[${code}m${text}${RESET}`;
 const label = (text: string) => paint("2;37", text);
+
+// Context turns yellow at 10% and red above 15%; the rate limits at 50% and 80%.
+export const THRESHOLDS: Thresholds = {
+  context: { yellow: 10, red: 16 },
+  fiveHour: { yellow: 50, red: 80 },
+  sevenDay: { yellow: 50, red: 80 },
+};
+
+// The defaults, with any valid `statusLine` thresholds from the Harness config over them.
+export function thresholds(config: Record<string, unknown> | null): Thresholds {
+  const set = config?.statusLine;
+  const result = structuredClone(THRESHOLDS);
+  if (!set || typeof set !== "object") return result;
+  for (const key of Object.keys(result) as (keyof Thresholds)[]) {
+    const given = (set as Record<string, unknown>)[key] as Partial<Threshold> | undefined;
+    for (const color of ["yellow", "red"] as const)
+      if (typeof given?.[color] === "number") result[key][color] = given[color];
+  }
+  return result;
+}
 
 // A bar and its percentage: dim green, yellow from `yellow`%, red from `red`%.
 export function bar(percent: number, width: number, yellow = 50, red = 80): string {
@@ -51,33 +75,43 @@ export function left(repo: Repo | null): string {
   ].join(" ");
 }
 
-export function middle(input: Input, width: number, showReset: boolean): string {
+export function middle(
+  input: Input,
+  width: number,
+  showReset: boolean,
+  t: Thresholds = THRESHOLDS,
+): string {
   const parts: string[] = [];
   // Before the first reply the context window has no percentage: show it empty.
   const ctx = input.context_window && (input.context_window.used_percentage ?? 0);
   const five = input.rate_limits?.five_hour;
   const week = input.rate_limits?.seven_day?.used_percentage;
-  // Context turns yellow at 10% and red above 15%.
-  if (ctx != null) parts.push(`${label("Ctx")} ${bar(ctx, width, 10, 16)}`);
+  const colored = (pct: number, { yellow, red }: Threshold) => bar(pct, width, yellow, red);
+  if (ctx != null) parts.push(`${label("Ctx")} ${colored(ctx, t.context)}`);
   if (five?.used_percentage != null) {
-    let part = `${label("5h")} ${bar(five.used_percentage, width)}`;
+    let part = `${label("5h")} ${colored(five.used_percentage, t.fiveHour)}`;
     if (showReset && five.resets_at != null)
       part += ` ${paint("2;90", `(${resetTime(five.resets_at)})`)}`;
     parts.push(part);
   }
-  if (week != null) parts.push(`${label("7d")} ${bar(week, width)}`);
+  if (week != null) parts.push(`${label("7d")} ${colored(week, t.sevenDay)}`);
   return parts.join(" ");
 }
 
 export const visible = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "").length;
 
 // The whole line for a terminal `columns` wide, less a margin against wrapping.
-export function render(input: Input, repo: Repo | null, columns: number): string {
+export function render(
+  input: Input,
+  repo: Repo | null,
+  columns: number,
+  t: Thresholds = THRESHOLDS,
+): string {
   const width = Math.max(40, columns - 10);
   const l = left(repo);
   let mid = "";
   for (const [barWidth, showReset] of [[10, true], [5, true], [5, false]] as const) {
-    mid = middle(input, barWidth, showReset);
+    mid = middle(input, barWidth, showReset, t);
     if (visible(l) + visible(mid) + 1 <= width) break;
   }
   const start = Math.max(Math.floor((width - visible(mid)) / 2), visible(l) + 1);
@@ -113,7 +147,12 @@ function columns(): number {
 async function main() {
   const input = (await Bun.stdin.json()) as Input;
   const dir = input.workspace?.current_dir;
-  console.log(render(input, dir ? repo(dir) : null, columns()));
+  const project = input.workspace?.project_dir ?? dir;
+  let config = null;
+  try {
+    config = project ? load(project) : null;
+  } catch {}
+  console.log(render(input, dir ? repo(dir) : null, columns(), thresholds(config)));
 }
 
 if (import.meta.main) main().catch(() => {});

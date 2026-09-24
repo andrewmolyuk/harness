@@ -12,12 +12,14 @@ the Git hooks it lists and, with `"statusLine": true`, install the plugin's stat
 need `bun`.
 
 `.harness.json` configures them. The guard can block more commands but never fewer; each Git
-hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails:
+hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails;
+`statusLine` is `true` or, to change where its bars turn yellow and red, the percentages for
+`context` (10, 16 by default), `fiveHour` and `sevenDay` (50, 80):
 
 ```json
 {
   "guard": { "block": [{ "pattern": "\\bterraform destroy\\b", "reason": "destroys infra" }] },
-  "statusLine": true,
+  "statusLine": { "context": { "yellow": 20, "red": 40 } },
   "gitHooks": {
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
     "pre-commit": ["am:adr-immutable", "bun run check"],

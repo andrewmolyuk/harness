@@ -3,7 +3,16 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { bar, type Input, render, repo, resetTime, visible } from "./statusline";
+import {
+  bar,
+  type Input,
+  render,
+  repo,
+  resetTime,
+  THRESHOLDS,
+  thresholds,
+  visible,
+} from "./statusline";
 
 const plain = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
 const now = new Date(2026, 8, 24, 10, 0);
@@ -27,6 +36,25 @@ describe("bar", () => {
     expect(ctx(10)).toContain("\x1b[2;33m");
     expect(ctx(15)).toContain("\x1b[2;33m");
     expect(ctx(15.6)).toContain("\x1b[2;31m");
+  });
+});
+
+describe("thresholds", () => {
+  test("takes the ones the config sets, and the defaults for the rest", () => {
+    expect(thresholds(null)).toEqual(THRESHOLDS);
+    expect(thresholds({ statusLine: true })).toEqual(THRESHOLDS);
+    const t = thresholds({ statusLine: { context: { red: 30 }, sevenDay: { yellow: "x" } } });
+    expect(t).toEqual({ ...THRESHOLDS, context: { yellow: 10, red: 30 } });
+    expect(THRESHOLDS.context.red).toBe(16);
+  });
+
+  test("colour the bars", () => {
+    const t = thresholds({ statusLine: { context: { yellow: 20, red: 40 } } });
+    const ctx = (used: number) =>
+      render({ context_window: { used_percentage: used } }, null, 120, t).trim();
+    expect(ctx(19)).toContain("\x1b[2;32m");
+    expect(ctx(20)).toContain("\x1b[2;33m");
+    expect(ctx(40)).toContain("\x1b[2;31m");
   });
 });
 

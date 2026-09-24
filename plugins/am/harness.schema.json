@@ -30,8 +30,28 @@
       }
     },
     "statusLine": {
-      "description": "Show the am plugin's status line in this project, set in .claude/settings.local.json.",
-      "type": "boolean"
+      "description": "Show the am plugin's status line in this project, set in .claude/settings.local.json. An object shows it too, and sets the percentages at which each bar turns yellow and red.",
+      "oneOf": [
+        { "type": "boolean" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "context": {
+              "description": "The context bar; yellow from 10, red from 16 by default.",
+              "$ref": "#/definitions/threshold"
+            },
+            "fiveHour": {
+              "description": "The 5-hour bar; yellow from 50, red from 80 by default.",
+              "$ref": "#/definitions/threshold"
+            },
+            "sevenDay": {
+              "description": "The 7-day bar; yellow from 50, red from 80 by default.",
+              "$ref": "#/definitions/threshold"
+            }
+          }
+        }
+      ]
     },
     "gitHooks": {
       "description": "Git hooks to generate: each runs its entries in order and stops at the first failure. A Git hook is installed only when its key is present.",
@@ -68,6 +88,21 @@
       "type": "string",
       "minLength": 1,
       "not": { "pattern": "^am:" }
-    }
+    },
+    "threshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "yellow": {
+          "description": "The percentage from which the bar is yellow.",
+          "$ref": "#/definitions/percent"
+        },
+        "red": {
+          "description": "The percentage from which the bar is red.",
+          "$ref": "#/definitions/percent"
+        }
+      }
+    },
+    "percent": { "type": "number", "minimum": 0, "maximum": 100 }
   }
 }

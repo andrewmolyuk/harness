@@ -39,7 +39,8 @@ A contested name or a case the glossary can't answer yet, listed with what would
 
 **Harness config**:
 The project's `.harness.json`: its settings for the `am` hooks — extra commands for the guard
-to block, the Git hooks to generate, and whether to install the Status line.
+to block, the Git hooks to generate, and whether to install the Status line and where its bars
+turn yellow and red.
 _Avoid_: harness file, settings
 
 **Git hook**:
