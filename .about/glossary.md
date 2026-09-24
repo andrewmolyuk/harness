@@ -2,8 +2,8 @@
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
 files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), find
-the cause of a Bug before fixing it, sync its Git hooks, show a Status line, and guard it
-against destructive commands and Leaks.
+the cause of a Bug before fixing it, learn from past sessions in a Retro, sync its Git hooks,
+show a Status line, and guard it against destructive commands and Leaks.
 
 ## Glossary
 
@@ -79,6 +79,12 @@ The `am` plugin's Claude Code hook that, when a session ends in a project whose 
 asks for it (by default, one with `.about/`), has a separate headless session record in the
 glossary and ADRs what the conversation settled.
 _Avoid_: session-end review
+
+**Retro**:
+A review the user asks for of how past sessions went: where work stalled (a failed or refused
+tool call, an interrupt, a prompt typed again) and what change to the project's setup would
+have prevented it. Unlike the Session review, it looks at the work, not at what was settled.
+_Avoid_: retrospective, post-mortem
 
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the

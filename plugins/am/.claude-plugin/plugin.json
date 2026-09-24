@@ -1,7 +1,7 @@
 {
   "name": "am",
-  "version": "0.11.0",
-  "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files, diagnose for finding a bug's cause), a session review, a guard against destructive commands and secret leaks, Git hooks and a status line from .harness.json.",
+  "version": "0.12.0",
+  "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files, diagnose for finding a bug's cause, retro for learning from past sessions), a session review, a guard against destructive commands and secret leaks, Git hooks and a status line from .harness.json.",
   "author": {
     "name": "Andrew Molyuk",
     "email": "andrew@molyuk.com"
