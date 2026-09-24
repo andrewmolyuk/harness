@@ -5,7 +5,7 @@ I'm Andrew Molyuk, and this is my personal project: the parts of my own Claude C
 projects, including this one. It's shaped by my own habits and published as is; take what fits
 yours.
 
-The repo is a Claude Code plugin marketplace with one plugin, `am`: six [skills](#skills) and the
+The repo is a Claude Code plugin marketplace with one plugin, `am`: seven [skills](#skills) and the
 [hooks](#hooks) below, set up per project in [`.harness.json`](#configuration).
 
 ## Skills
@@ -17,8 +17,11 @@ Claude picks a skill when the conversation calls for it; `/am:<skill>` runs it b
   and records each Entry as it settles.
 - **`adr`** — challenges and records Decisions: business rules, boundaries, integrations,
   technology choices. It calls out a proposal that contradicts an earlier ADR, probes the
-  alternatives and cost, and writes `.about/adr/NNNN-slug.md` when a decision is hard to
+  alternatives and cost, and writes `.about/adr/NNNN-slug.md` when a Decision is hard to
   reverse, not obvious and a real trade-off.
+- **`interview`** — settles a plan before you build it. It maps the Decisions the plan depends
+  on, asks the ready ones a few at a time with a recommended answer, looks facts up instead of
+  asking you, and ends with the list of Decisions you confirm.
 - **`architecture`** — finds where fewer, deeper Modules would make the code easier to change
   and test. It reads the files that change most for Shallow modules and code hard to test
   through its Interface, ranks each Deepening against the ADRs, and works the one you pick into

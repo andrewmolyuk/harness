@@ -1,10 +1,10 @@
 # harness glossary
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
-files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), find
-the cause of a Bug before fixing it, find Deepenings in its code, learn from past sessions in a
-Retro, sync its Git hooks, show a Status line, load its Guidelines, and guard it against
-destructive commands and Leaks.
+files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review),
+settle a plan in an Interview, find the cause of a Bug before fixing it, find Deepenings in its
+code, learn from past sessions in a Retro, sync its Git hooks, show a Status line, load its
+Guidelines, and guard it against destructive commands and Leaks.
 
 ## Glossary
 
@@ -145,6 +145,11 @@ a wrong reference); fixing one never changes what was decided.
 A contradiction or an unanswered case uncovered while probing; it is recorded, never papered
 over.
 _Avoid_: find
+
+**Interview**:
+Questioning the user about a plan, a few questions a round, until every Decision it depends on
+is settled or knowingly left to be settled while building it; facts are looked up, never asked.
+_Avoid_: grilling, questionnaire
 
 ## Diagnosing
 
