@@ -6,6 +6,8 @@ import { join } from "node:path";
 import schema from "../harness.schema.json";
 import { CREATED, DEFAULTS, ensure, SCHEMA } from "./harness-config";
 
+const HOOK = join(import.meta.dir, "harness-config.ts");
+
 describe("ensure", () => {
   let dir: string;
   const file = () => join(dir, ".harness.json");
@@ -86,5 +88,16 @@ describe("ensure", () => {
     const outside = mkdtempSync(join(tmpdir(), "harness-config-"));
     expect(ensure(outside)).toEqual([]);
     expect(existsSync(join(outside, ".harness.json"))).toBe(false);
+  });
+
+  test("runs as a SessionStart hook and reports what it did to Claude", () => {
+    const proc = spawnSync("bun", [HOOK], {
+      input: JSON.stringify({ cwd: dir }),
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
+    });
+    expect(proc.status).toBe(0);
+    expect(proc.stdout).toBe(`am harness config:\n${CREATED}\n`);
+    expect(JSON.parse(config())).toEqual(DEFAULTS);
   });
 });
