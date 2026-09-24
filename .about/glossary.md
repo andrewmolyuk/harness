@@ -2,8 +2,9 @@
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
 files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), find
-the cause of a Bug before fixing it, learn from past sessions in a Retro, sync its Git hooks,
-show a Status line, load its Guidelines, and guard it against destructive commands and Leaks.
+the cause of a Bug before fixing it, find Deepenings in its code, learn from past sessions in a
+Retro, sync its Git hooks, show a Status line, load its Guidelines, and guard it against
+destructive commands and Leaks.
 
 ## Glossary
 
@@ -167,9 +168,32 @@ One change or observation that checks a Hypothesis's prediction, with everything
 fixed.
 _Avoid_: probe, which is questioning a term or Decision
 
+## Architecture
+
+**Module**:
+Anything with an Interface: a function, a class, a package, a service.
+_Avoid_: component, unit; "module" for a Context
+
+**Interface**:
+All a caller must know to use a Module: its types, and also the order of calls, the errors,
+the limits and the config.
+_Avoid_: API, signature, which name only the types
+
 **Seam**:
 A public boundary where a test observes behaviour without reaching inside the code; not a
 place to swap behaviour for a test.
+
+**Shallow module**:
+A Module whose Interface is nearly as big as the code behind it; it hides little, and its
+callers would lose nothing without it.
+_Avoid_: thin module
+
+**Deepening**:
+A change that puts more behaviour behind fewer, smaller Interfaces: folding a Shallow module
+into its callers or neighbours, merging Modules that always change together behind one, or
+moving logic every caller repeats behind the Interface they call. Its tests move to the new
+Interface.
+_Avoid_: refactor, which is any change of structure
 
 ## Retro
 
