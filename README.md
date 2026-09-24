@@ -40,8 +40,8 @@ All hooks need `bun`; without it they do nothing.
 - **`.harness.json`** — at session start, creates the file at the repo root with every setting
   off. If the file exists, it adds any missing keys and leaves your values alone.
 - **Sync** — at session start, generates the Git hooks `.harness.json` lists. With
-  `statusLine` on, it also installs the plugin's Status line (branch, file counts, context and
-  rate-limit usage) in `.claude/settings.local.json`.
+  `statusLine` on, it also installs the plugin's Status line (branch, file counts, context usage
+  and tokens, rate-limit usage) in `.claude/settings.local.json`.
 - **Guidelines** — at session start, with `"guidelines": true`, adds a short index,
   `plugins/am/guidelines/index.md`, to Claude's context. The index names the Guideline files,
   such as `principles.md`, that Claude reads when a task calls for one. Reading one may ask for

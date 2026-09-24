@@ -1,14 +1,14 @@
 // The Status line (ADR 0009): the branch and staged, untracked, added, modified and deleted file
-// counts on the left, and context, 5-hour and 7-day usage bars centred on the line. When the line
-// is too narrow it shrinks the bars, then drops the 5-hour reset time. The Harness config can set
-// the percentages at which each bar turns yellow and red.
+// counts on the left, and context (with its tokens), 5-hour and 7-day usage bars centred on the
+// line. When the line is too narrow it shrinks the bars, then drops the 5-hour reset time. The
+// Harness config can set the percentages at which each bar turns yellow and red.
 import { spawnSync } from "node:child_process";
 import { type Config, load } from "../lib/config";
 
 type Limit = { used_percentage?: number; resets_at?: number };
 export type Input = {
   workspace?: { current_dir?: string; project_dir?: string };
-  context_window?: { used_percentage?: number | null };
+  context_window?: { used_percentage?: number | null; total_input_tokens?: number };
   rate_limits?: { five_hour?: Limit; seven_day?: Limit };
 };
 export type BarThresholds = { yellow: number; red: number };
@@ -78,13 +78,10 @@ export function bar(percent: number, width: number, { yellow, red }: BarThreshol
   return `${paint(color, "█".repeat(filled) + "░".repeat(width - filled))} ${pct}%`;
 }
 
-// "HH:MM" when the reset falls today, local time, else "Wed Sep 24, 14:00".
-export function resetTime(epochSeconds: number, now = new Date()): string {
+// "HH:MM", local time: the 5-hour window resets within 5 hours, so the day goes without saying.
+export function resetTime(epochSeconds: number): string {
   const at = new Date(epochSeconds * 1000);
-  const time = at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  if (at.toDateString() === now.toDateString()) return time;
-  const [weekday, month] = at.toDateString().split(" ");
-  return `${weekday} ${month} ${String(at.getDate()).padStart(2, "0")}, ${time}`;
+  return at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
 export function left(repo: Repo | null): string {
@@ -112,7 +109,13 @@ export function middle(
   const ctx = input.context_window && (input.context_window.used_percentage ?? 0);
   const five = input.rate_limits?.five_hour;
   const week = input.rate_limits?.seven_day?.used_percentage;
-  if (ctx != null) parts.push(`${label("Ctx")} ${bar(ctx, width, t.context)}`);
+  if (ctx != null) {
+    let part = `${label("Ctx")} ${bar(ctx, width, t.context)}`;
+    // The tokens the percentage counts, in thousands; none before the first reply.
+    const tokens = input.context_window?.total_input_tokens;
+    if (tokens) part += ` ${paint("2;90", `(${Math.round(tokens / 1000)}K)`)}`;
+    parts.push(part);
+  }
   if (five?.used_percentage != null) {
     let part = `${label("5h")} ${bar(five.used_percentage, width, t.fiveHour)}`;
     if (showReset && five.resets_at != null)

@@ -15,7 +15,6 @@ import {
 } from "./statusline";
 
 const plain = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
-const now = new Date(2026, 8, 24, 10, 0);
 const at = (...args: [number, number, number, number, number]) =>
   new Date(...args).getTime() / 1000;
 
@@ -84,9 +83,9 @@ describe("thresholds", () => {
 });
 
 describe("resetTime", () => {
-  test("shows the time alone today, and the day otherwise", () => {
-    expect(resetTime(at(2026, 8, 24, 14, 5), now)).toBe("14:05");
-    expect(resetTime(at(2026, 8, 25, 9, 0), now)).toBe("Fri Sep 25, 09:00");
+  test("shows the time alone, even past midnight", () => {
+    expect(resetTime(at(2026, 8, 24, 14, 5))).toBe("14:05");
+    expect(resetTime(at(2026, 8, 25, 1, 0))).toBe("01:00");
   });
 });
 
@@ -127,6 +126,15 @@ describe("render", () => {
       plain(render({ context_window }, null, 120).trim());
     expect(empty({})).toBe("Ctx ░░░░░░░░░░ 0%");
     expect(empty({ used_percentage: null })).toBe("Ctx ░░░░░░░░░░ 0%");
+    expect(empty({ used_percentage: 0, total_input_tokens: 0 })).toBe("Ctx ░░░░░░░░░░ 0%");
+  });
+
+  test("shows the context's tokens after its percentage, rounded to thousands", () => {
+    const ctx = (total_input_tokens: number) =>
+      plain(render({ context_window: { used_percentage: 60, total_input_tokens } }, null, 120));
+    expect(ctx(120_400)).toEndWith("60% (120K)");
+    expect(ctx(199_600)).toEndWith("60% (200K)");
+    expect(ctx(400)).toEndWith("60% (0K)");
   });
 });
 
