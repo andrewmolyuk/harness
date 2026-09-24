@@ -1,7 +1,7 @@
 {
   "name": "am",
-  "version": "0.8.0",
-  "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files), a session review, a guard against destructive commands, Git hooks and a status line from .harness.json.",
+  "version": "0.9.0",
+  "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files, diagnose for finding a bug's cause), a session review, a guard against destructive commands, Git hooks and a status line from .harness.json.",
   "author": {
     "name": "Andrew Molyuk",
     "email": "andrew@molyuk.com"
@@ -12,6 +12,7 @@
     "adr",
     "domain-modeling",
     "tidy",
+    "debugging",
     "hooks",
     "git-hooks",
     "statusline"

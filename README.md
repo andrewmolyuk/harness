@@ -1,18 +1,19 @@
 # harness
 
-Claude Code plugin marketplace. Its `am` plugin has three skills: `glossary` and `adr` keep a
+Claude Code plugin marketplace. Its `am` plugin has four skills: `glossary` and `adr` keep a
 project's domain glossary and ADRs in `.about/`; `tidy` rechecks files for consistency,
-duplicates and wordiness. In a project that already has `.about/`, or sets
-`"sessionReview": true`, the session review hook records what each finished conversation
+duplicates and wordiness; `diagnose` reproduces a bug with a feedback loop and finds its cause
+before fixing it. In a project that already has `.about/`, or sets
+`"sessionReview": true`, the Session review hook records what each finished conversation
 settled, with `glossary` and `adr` in the background; `"sessionReview": false` turns it off.
-In every project, the guard hook blocks destructive git and shell commands (`git push --force`,
+In every project, the Guard hook blocks destructive git and shell commands (`git push --force`,
 `git reset --hard`, `rm -rf /`…) and commands that skip Git hooks (`--no-verify`), and leaves
-them to the user. In a project with `.harness.json`, at session start, the sync hooks generate
-the Git hooks it lists and, with `statusLine` on, install the plugin's status line
+them to the user. In a project with `.harness.json`, at session start, the Sync hooks generate
+the Git hooks it lists and, with `statusLine` on, install the plugin's Status line
 (branch, file counts, context and rate-limit usage) in `.claude/settings.local.json`. All hooks
 need `bun`.
 
-`.harness.json` configures them. The guard can block more commands but never fewer; each Git
+`.harness.json` configures them. The Guard can block more commands but never fewer; each Git
 hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails;
 `statusLine` is `true` or, to change where its bars turn yellow and red, the percentages for
 `context` (10, 15 by default), `fiveHour` (50, 80) and `sevenDay` (80, 95):

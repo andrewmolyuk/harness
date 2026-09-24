@@ -26,6 +26,8 @@
 
 - Skill text uses the terms defined in `.about/glossary.md` (Term, Entry, Context, Trailer, ADR,
   Status…). A new or changed term goes there first.
+- The repo's own docs capitalise a term as the glossary does (the Guard, the Status line).
+  Manifests, the schema and hook output keep plain words: their readers don't have the glossary.
 - Skills are independent: no links or references between them.
 - Keep skills short. Every line loads with the skill; cut what doesn't change behaviour.
 - Hooks are TypeScript run with `bun`, each with a `<hook>.test.ts` beside it. A hook that acts

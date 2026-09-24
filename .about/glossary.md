@@ -1,8 +1,9 @@
 # harness glossary
 
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
-files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), sync
-its Git hooks, show a Status line, and guard it against destructive commands.
+files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), find
+the cause of a Bug before fixing it, sync its Git hooks, show a Status line, and guard it
+against destructive commands.
 
 ## Glossary
 
@@ -38,7 +39,7 @@ A contested name or a case the glossary can't answer yet, listed with what would
 ## Configuration
 
 **Harness config**:
-The project's `.harness.json`: its settings for the `am` hooks — extra commands for the guard
+The project's `.harness.json`: its settings for the `am` hooks — extra commands for the Guard
 to block, the Git hooks to generate, whether to install the Status line and its Thresholds, and
 whether to run the Session review.
 _Avoid_: harness file, settings
@@ -114,3 +115,29 @@ a wrong reference); fixing one never changes what was decided.
 A contradiction or an unanswered case uncovered while probing; it is recorded, never papered
 over.
 _Avoid_: find
+
+## Diagnosing
+
+**Bug**:
+Behaviour that differs from what the code, its docs or tests promise, or from what it used to
+do: wrong output, a crash, a failing or flaky test, a slowdown. One symptom is one Bug, however
+many causes it has; anything never promised is a missing feature.
+_Avoid_: issue, defect
+
+**Feedback loop**:
+One command that goes red on a Bug's exact symptom and green once it is fixed; for a flaky
+Bug, red often enough to debug.
+_Avoid_: repro
+
+**Hypothesis**:
+A possible cause of a Bug, stated with the prediction that would prove it wrong.
+_Avoid_: theory, guess
+
+**Experiment**:
+One change or observation that checks a Hypothesis's prediction, with everything else held
+fixed.
+_Avoid_: probe, which is questioning a term or Decision
+
+**Seam**:
+A public boundary where a test observes behaviour without reaching inside the code; not a
+place to swap behaviour for a test.
