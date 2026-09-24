@@ -107,8 +107,8 @@ _Avoid_: knowledge, which here is a project's own glossary and ADRs in `.about/`
 _In code_: `guidelines.ts`, `guidelines/`
 
 **Guideline file**:
-One of the Guidelines' files beyond the index (principles, a language's conventions); Claude
-reads it when a task calls for it, never at session start.
+One of the Guidelines' files beyond the index (principles, design, testing); Claude reads it
+when a task calls for it, never at session start.
 
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
@@ -171,7 +171,7 @@ _Avoid_: theory, guess
 **Experiment**:
 One change or observation that checks a Hypothesis's prediction, with everything else held
 fixed.
-_Avoid_: probe, which is questioning a term or Decision
+_Avoid_: probe, which is questioning a term, a Decision or a plan
 
 ## Architecture
 
@@ -185,8 +185,8 @@ the limits and the config.
 _Avoid_: API, signature, which name only the types
 
 **Seam**:
-A public boundary where a test observes behaviour without reaching inside the code; not a
-place to swap behaviour for a test.
+Where a Module's Interface sits: the public boundary callers and tests go through, so a test
+observes behaviour without reaching inside the code; not a place to swap behaviour for a test.
 
 **Shallow module**:
 A Module whose Interface is nearly as big as the code behind it; it hides little, and its
