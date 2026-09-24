@@ -29,6 +29,8 @@ silently:
 - Name your confidence in non-obvious choices (_high_, _medium_, _low_).
 - Push back when a simpler approach would serve the goal better.
 - Stop on confusion: name what's unclear and ask.
+- Validate against the source that owns the fact (the official docs, the code, the spec), not
+  someone's account of it.
 
 **Test:** a reviewer can point at each assumption and confirm "yes, we agreed on that."
 
@@ -55,6 +57,8 @@ silently:
 - No abstractions for single-use code; no configurability nobody asked for.
 - No error handling for impossible cases.
 - If it could be 50 lines and it's 200, rewrite it.
+- When only running code can settle a question, prototype for that one question: no tests, no
+  error handling. Keep the answer, not the code.
 
 **Test:** every changed line and every added feature traces to the stated problem.
 
@@ -64,6 +68,8 @@ silently:
 - Don't refactor or "improve" adjacent code, comments or formatting that isn't broken.
 - Remove the orphans _your_ change created (unused imports, variables, functions).
 - Leave pre-existing dead code alone: mention it, don't delete it.
+- Resolve a merge conflict by each side's intent, read from its commits or PR: keep both where
+  they fit, then run the checks. Picking `--ours` or `--theirs` to clear the markers drops work.
 
 **Test:** every changed line traces to the user's request.
 

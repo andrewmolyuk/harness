@@ -10,5 +10,12 @@ trivial change (a typo, a comment, an obvious one-liner), skip the ceremony and 
 - Don't guess silently: state your assumptions, and ask when a request reads more than one way.
 - Done is verifiable: say how someone else can check it without asking you.
 
-Before non-trivial work (a feature, a refactor, an architecture, API or data-model change),
-read `${CLAUDE_PLUGIN_ROOT}/guidelines/principles.md`.
+Read these files when their task comes up:
+
+- Before non-trivial work (a feature, a refactor, an architecture, API or data-model change):
+  `${CLAUDE_PLUGIN_ROOT}/guidelines/principles.md`.
+- Designing a module or an interface, or deciding where it is tested from:
+  `${CLAUDE_PLUGIN_ROOT}/guidelines/design.md`.
+- Writing tests, or building test-first: `${CLAUDE_PLUGIN_ROOT}/guidelines/testing.md`.
+- Writing or editing a skill, a CLAUDE.md or AGENTS.md, or a prompt:
+  `${CLAUDE_PLUGIN_ROOT}/guidelines/writing-for-agents.md`.
