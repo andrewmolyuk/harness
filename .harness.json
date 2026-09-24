@@ -6,10 +6,11 @@
     "sevenDay": { "yellow": 80, "red": 95 }
   },
   "sessionReview": true,
+  "guidelines": true,
   "gitHooks": {
     "commit-msg": ["am:conventional-commits", "am:no-ai-coauthor"],
     "pre-commit": ["am:adr-immutable", "am:no-secrets", "bun run check"],
     "pre-push": ["am:linear-history"]
   },
-  "guard": {"block":[]}
+  "guard": { "block": [] }
 }
