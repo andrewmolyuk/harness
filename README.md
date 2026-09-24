@@ -42,10 +42,18 @@ to `https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harne
 
 ## Install
 
+From the project's folder:
+
 ```
-/plugin marketplace add <path-or-git-url>
-/plugin install am@harness
+claude plugin marketplace add andrewmolyuk/harness
+claude plugin install am@harness --scope project
 ```
+
+The marketplace is this GitHub repo's `main`; a local path or a git URL works too. The scope
+says where the plugin loads: `user`, the default, in every project; `project` in this one, for
+everyone who clones it (`.claude/settings.json`, committed); `local` in this one, only for you
+(`.claude/settings.local.json`). Inside a session, `/plugin` asks for the scope. Restart the
+session to load it, and run `/plugin marketplace update harness` to pick up a new version.
 
 ## Develop
 
