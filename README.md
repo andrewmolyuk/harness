@@ -2,9 +2,10 @@
 
 I'm Andrew Molyuk, and this is my personal project: the parts of my own Claude Code Harness
 (skills, hooks, Git hooks, Guidelines, a Status line) that I use every day in most of my pet
-projects. It's shaped by my own habits and published as is; take what fits yours.
+projects, including this one. It's shaped by my own habits and published as is; take what fits
+yours.
 
-It's a Claude Code plugin marketplace with one plugin, `am`: five [skills](#skills) and the
+The repo is a Claude Code plugin marketplace with one plugin, `am`: five [skills](#skills) and the
 [hooks](#hooks) below, set up per project in [`.harness.json`](#configuration).
 
 ## Skills
