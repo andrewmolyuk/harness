@@ -3,7 +3,7 @@
 // too narrow it shrinks the bars, then drops the 5-hour reset time. The Harness config can set
 // the percentages at which each bar turns yellow and red.
 import { spawnSync } from "node:child_process";
-import { load } from "../lib/config";
+import { type Config, load } from "../lib/config";
 
 type Limit = { used_percentage?: number; resets_at?: number };
 export type Input = {
@@ -32,21 +32,42 @@ export const THRESHOLDS: Thresholds = {
   sevenDay: { yellow: 50, red: 80 },
 };
 
-// The defaults, with any valid `statusLine` thresholds from the Harness config over them.
-export function thresholds(config: Record<string, unknown> | null): Thresholds {
-  const set = config?.statusLine;
-  const result = structuredClone(THRESHOLDS);
-  if (!set || typeof set !== "object") return result;
-  for (const key of Object.keys(result) as (keyof Thresholds)[]) {
-    const given = (set as Record<string, unknown>)[key] as Partial<Threshold> | undefined;
-    for (const color of ["yellow", "red"] as const)
-      if (typeof given?.[color] === "number") result[key][color] = given[color];
+// The defaults, with the valid `statusLine` thresholds from the Harness config over them, and
+// what's wrong with the rest.
+export function thresholds(config: Config | null): { set: Thresholds; problems: string[] } {
+  const set = structuredClone(THRESHOLDS);
+  const problems: string[] = [];
+  const given = config?.statusLine;
+  if (!given || typeof given !== "object") return { set, problems };
+  const percent = (v: unknown): v is number => typeof v === "number" && v >= 0 && v <= 100;
+  for (const [key, value] of Object.entries(given)) {
+    const where = `statusLine.${key}`;
+    if (!(key in set)) {
+      problems.push(`${where} is not a bar (${Object.keys(set).join(", ")}); ignored`);
+      continue;
+    }
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      problems.push(`${where} is not an object of yellow and red; the defaults are used`);
+      continue;
+    }
+    const t = { ...set[key as keyof Thresholds] };
+    for (const [color, pct] of Object.entries(value)) {
+      if (color !== "yellow" && color !== "red")
+        problems.push(`${where}.${color} is not yellow or red; ignored`);
+      else if (!percent(pct))
+        problems.push(`${where}.${color} is not a percentage from 0 to 100; the default is used`);
+      else t[color] = pct;
+    }
+    const { yellow, red } = t;
+    if (yellow > red)
+      problems.push(`${where}: yellow (${yellow}) is above red (${red}); the defaults are used`);
+    else set[key as keyof Thresholds] = t;
   }
-  return result;
+  return { set, problems };
 }
 
 // A bar and its percentage: dim green, yellow from `yellow`%, red from `red`%.
-export function bar(percent: number, width: number, yellow = 50, red = 80): string {
+export function bar(percent: number, width: number, { yellow, red }: Threshold): string {
   const pct = Math.min(100, Math.max(0, Math.round(percent)));
   const filled = Math.floor((pct * width) / 100);
   const color = pct >= red ? "2;31" : pct >= yellow ? "2;33" : "2;32";
@@ -86,15 +107,14 @@ export function middle(
   const ctx = input.context_window && (input.context_window.used_percentage ?? 0);
   const five = input.rate_limits?.five_hour;
   const week = input.rate_limits?.seven_day?.used_percentage;
-  const colored = (pct: number, { yellow, red }: Threshold) => bar(pct, width, yellow, red);
-  if (ctx != null) parts.push(`${label("Ctx")} ${colored(ctx, t.context)}`);
+  if (ctx != null) parts.push(`${label("Ctx")} ${bar(ctx, width, t.context)}`);
   if (five?.used_percentage != null) {
-    let part = `${label("5h")} ${colored(five.used_percentage, t.fiveHour)}`;
+    let part = `${label("5h")} ${bar(five.used_percentage, width, t.fiveHour)}`;
     if (showReset && five.resets_at != null)
       part += ` ${paint("2;90", `(${resetTime(five.resets_at)})`)}`;
     parts.push(part);
   }
-  if (week != null) parts.push(`${label("7d")} ${colored(week, t.sevenDay)}`);
+  if (week != null) parts.push(`${label("7d")} ${bar(week, width, t.sevenDay)}`);
   return parts.join(" ");
 }
 
@@ -152,7 +172,7 @@ async function main() {
   try {
     config = project ? load(project) : null;
   } catch {}
-  console.log(render(input, dir ? repo(dir) : null, columns(), thresholds(config)));
+  console.log(render(input, dir ? repo(dir) : null, columns(), thresholds(config).set));
 }
 
 if (import.meta.main) main().catch(() => {});

@@ -1,13 +1,14 @@
 // SessionStart hook: in a project whose .harness.json has `"statusLine": true` or thresholds,
 // point Claude Code's status line at the plugin's script, in the project's
 // .claude/settings.local.json (ADR 0009). It writes and removes only a status line marked as its
-// own, rewriting it each session since the script's path changes with every plugin version;
-// problems are reported to Claude, and anything missing (the config, git) means it quietly does
-// nothing.
+// own, rewriting it each session since the script's path changes with every plugin version.
+// Problems, wrong thresholds among them, are reported to Claude; anything missing (the config,
+// git) means it quietly does nothing.
 import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { load } from "../lib/config";
+import { thresholds } from "../statusline/statusline";
 
 type Input = { cwd?: string };
 
@@ -44,10 +45,14 @@ export function sync(dir: string, script = SCRIPT): string[] {
   }
   if (!config) return [];
   // An object of thresholds also switches the Status line on.
-  const set = config.statusLine ?? false;
-  if (typeof set !== "boolean" && (typeof set !== "object" || Array.isArray(set) || !set))
+  const on = config.statusLine ?? false;
+  if (typeof on !== "boolean" && (typeof on !== "object" || Array.isArray(on) || !on))
     return [".harness.json: statusLine is not true, false or an object of thresholds"];
-  const want = set !== false;
+  const report = thresholds(config).problems.map((p) => `.harness.json: ${p}`);
+  return [...report, ...install(dir, on !== false, script)];
+}
+
+function install(dir: string, want: boolean, script: string): string[] {
   const file = join(dir, SETTINGS);
   let settings: Record<string, unknown> = {};
   if (existsSync(file)) {

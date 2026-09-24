@@ -20,13 +20,14 @@ const at = (...args: [number, number, number, number, number]) =>
   new Date(...args).getTime() / 1000;
 
 describe("bar", () => {
+  const t = { yellow: 50, red: 80 };
   test("fills by percentage, clamped, coloured by threshold", () => {
-    expect(plain(bar(34.6, 10))).toBe("███░░░░░░░ 35%");
-    expect(plain(bar(150, 5))).toBe("█████ 100%");
-    expect(plain(bar(-3, 5))).toBe("░░░░░ 0%");
-    expect(bar(49, 10)).toStartWith("\x1b[2;32m");
-    expect(bar(50, 10)).toStartWith("\x1b[2;33m");
-    expect(bar(80, 10)).toStartWith("\x1b[2;31m");
+    expect(plain(bar(34.6, 10, t))).toBe("███░░░░░░░ 35%");
+    expect(plain(bar(150, 5, t))).toBe("█████ 100%");
+    expect(plain(bar(-3, 5, t))).toBe("░░░░░ 0%");
+    expect(bar(49, 10, t)).toStartWith("\x1b[2;32m");
+    expect(bar(50, 10, t)).toStartWith("\x1b[2;33m");
+    expect(bar(80, 10, t)).toStartWith("\x1b[2;31m");
   });
 
   test("context is yellow from 10% and red above 15%", () => {
@@ -41,17 +42,41 @@ describe("bar", () => {
 
 describe("thresholds", () => {
   test("takes the ones the config sets, and the defaults for the rest", () => {
-    expect(thresholds(null)).toEqual(THRESHOLDS);
-    expect(thresholds({ statusLine: true })).toEqual(THRESHOLDS);
-    const t = thresholds({ statusLine: { context: { red: 30 }, sevenDay: { yellow: "x" } } });
-    expect(t).toEqual({ ...THRESHOLDS, context: { yellow: 10, red: 30 } });
+    expect(thresholds(null)).toEqual({ set: THRESHOLDS, problems: [] });
+    expect(thresholds({ statusLine: true })).toEqual({ set: THRESHOLDS, problems: [] });
+    const { set } = thresholds({ statusLine: { context: { red: 30 }, sevenDay: { red: 100 } } });
+    expect(set).toEqual({
+      ...THRESHOLDS,
+      context: { yellow: 10, red: 30 },
+      sevenDay: { yellow: 50, red: 100 },
+    });
     expect(THRESHOLDS.context.red).toBe(16);
+  });
+
+  test("uses the defaults in place of wrong ones, and names each", () => {
+    const statusLine = {
+      week: {},
+      fiveHour: 5,
+      sevenDay: { blue: 1, red: "x", yellow: 101 },
+      context: { yellow: 20, red: 15 },
+    };
+    expect(thresholds({ statusLine })).toEqual({
+      set: THRESHOLDS,
+      problems: [
+        "statusLine.week is not a bar (context, fiveHour, sevenDay); ignored",
+        "statusLine.fiveHour is not an object of yellow and red; the defaults are used",
+        "statusLine.sevenDay.blue is not yellow or red; ignored",
+        "statusLine.sevenDay.red is not a percentage from 0 to 100; the default is used",
+        "statusLine.sevenDay.yellow is not a percentage from 0 to 100; the default is used",
+        "statusLine.context: yellow (20) is above red (15); the defaults are used",
+      ],
+    });
   });
 
   test("colour the bars", () => {
     const t = thresholds({ statusLine: { context: { yellow: 20, red: 40 } } });
     const ctx = (used: number) =>
-      render({ context_window: { used_percentage: used } }, null, 120, t).trim();
+      render({ context_window: { used_percentage: used } }, null, 120, t.set).trim();
     expect(ctx(19)).toContain("\x1b[2;32m");
     expect(ctx(20)).toContain("\x1b[2;33m");
     expect(ctx(40)).toContain("\x1b[2;31m");

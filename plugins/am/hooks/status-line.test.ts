@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import schema from "../harness.schema.json";
+import { THRESHOLDS } from "../statusline/statusline";
 import { command, SETTINGS, sync } from "./status-line";
 
 const HOOK = join(import.meta.dir, "status-line.ts");
@@ -24,11 +25,9 @@ describe("sync", () => {
 
   test("the schema allows it", () => {
     expect(schema.properties.statusLine.oneOf[0]).toEqual({ type: "boolean" });
-    expect(Object.keys(schema.properties.statusLine.oneOf[1].properties ?? {})).toEqual([
-      "context",
-      "fiveHour",
-      "sevenDay",
-    ]);
+    expect(Object.keys(schema.properties.statusLine.oneOf[1].properties ?? {})).toEqual(
+      Object.keys(THRESHOLDS),
+    );
   });
 
   test("does nothing without .harness.json or without statusLine", () => {
@@ -62,6 +61,14 @@ describe("sync", () => {
   test("switches it on with thresholds", () => {
     config({ statusLine: { context: { yellow: 20, red: 40 } } });
     sync(dir, "/v1/s.ts");
+    expect(settings().statusLine.command).toBe(command("/v1/s.ts"));
+  });
+
+  test("reports wrong thresholds, and installs it all the same", () => {
+    config({ statusLine: { context: { red: 5 } } });
+    expect(sync(dir, "/v1/s.ts")).toEqual([
+      ".harness.json: statusLine.context: yellow (10) is above red (5); the defaults are used",
+    ]);
     expect(settings().statusLine.command).toBe(command("/v1/s.ts"));
   });
 
