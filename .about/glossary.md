@@ -106,7 +106,8 @@ _Avoid_: session-end review
 Working rules the `am` plugin ships and adds to Claude's context at session start where the
 Harness config asks for them: a short index, always there, that names the Guideline files
 Claude reads when a task calls for one.
-_Avoid_: knowledge, rules (alone); "CLAUDE.md", which Claude Code loads itself
+_Avoid_: knowledge, which here is a project's own glossary and ADRs in `.about/`; rules (alone);
+"CLAUDE.md", which Claude Code loads itself
 _In code_: `guidelines.ts`, `guidelines/`
 
 **Guideline file**:
