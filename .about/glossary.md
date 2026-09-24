@@ -60,7 +60,8 @@ completes it
 The folder Claude Code starts a session in, where its per-project files such as
 `.claude/settings.local.json` live. It is the repo root or a folder below it, never the working
 directory a session moves to.
-_Avoid_: session's folder, "the folder Claude Code started in"
+_Avoid_: session's folder, "the folder Claude Code started in"; "project root", which means
+the repo root
 _In code_: `CLAUDE_PROJECT_DIR`, `project`
 
 **Git hook**:
@@ -108,8 +109,8 @@ _Avoid_: knowledge, which here is a project's own glossary and ADRs in `.about/`
 _In code_: `guidelines.ts`, `guidelines/`
 
 **Guideline file**:
-One of the Guidelines' files beyond the index (principles, design, testing, writing for agents,
-one per language or framework); Claude reads it when a task calls for it, never at session start.
+One of the Guidelines' files beyond the index, which names each; Claude reads it when a task
+calls for it, never at session start.
 
 **Built-in check**:
 A check the `am` plugin ships for one Git hook, enabled by listing it as `am:<name>` in the
