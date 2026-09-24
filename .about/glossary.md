@@ -3,7 +3,7 @@
 Claude Code plugins that help a project keep its domain language and decisions explicit and its
 files consistent (a glossary of terms, a log of ADRs, a tidy-up pass, the Session review), find
 the cause of a Bug before fixing it, sync its Git hooks, show a Status line, and guard it
-against destructive commands.
+against destructive commands and Leaks.
 
 ## Glossary
 
@@ -50,9 +50,9 @@ for every commit or push, whether or not Claude made it.
 _Avoid_: "hook" alone, which here means a Claude Code hook
 
 **Guard**:
-The `am` plugin's Claude Code hook that denies a destructive or hook-skipping command before
-Claude runs it and leaves it to the user; the Harness config can add blocks to its built-in
-rules, never lift one.
+The `am` plugin's Claude Code hook that denies a tool call before it runs when it would destroy
+work, skip the Git hooks or Leak a Secret into Claude's context, and leaves it to the user; the
+Harness config can add blocks to its built-in rules, never lift one.
 _Avoid_: blocker, firewall
 
 **Sync**:
@@ -147,9 +147,14 @@ place to swap behaviour for a test.
 **Secret**:
 A value that grants access: an API key, token, password or private key. A placeholder, a
 published example or a key meant to be public (a Stripe publishable key, a Firebase web key)
-isn't one, even where a check can't tell the difference. An env file counts as holding Secrets
+isn't one, even where a check can't tell the difference. An Env file counts as holding Secrets
 unless its first line says it holds none.
 _Avoid_: credential, key (alone)
+
+**Env file**:
+A file of environment settings a program or shell loads: `.env`, `.env.local`, `prod.env`,
+direnv's `.envrc`… A template of one (`.env.example`, `.sample`, `.template`, `.dist`) isn't one.
+_In code_: `isEnvFile`
 
 **Leak**:
 A Secret reaching anyone or anywhere it wasn't meant for: a commit, Claude's context, another

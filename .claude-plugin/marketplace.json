@@ -11,7 +11,7 @@
     {
       "name": "am",
       "source": "./plugins/am",
-      "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files, diagnose for finding a bug's cause), a session review, a guard against destructive commands, Git hooks and a status line from .harness.json."
+      "description": "Shared skills (glossary and ADRs kept in .about/, tidy for rechecking files, diagnose for finding a bug's cause), a session review, a guard against destructive commands and secret leaks, Git hooks and a status line from .harness.json."
     }
   ]
 }

@@ -7,11 +7,12 @@ before fixing it. In a project that already has `.about/`, or sets
 `"sessionReview": true`, the Session review hook records what each finished conversation
 settled, with `glossary` and `adr` in the background; `"sessionReview": false` turns it off.
 In every project, the Guard hook blocks destructive git and shell commands (`git push --force`,
-`git reset --hard`, `rm -rf /`…) and commands that skip Git hooks (`--no-verify`), and leaves
-them to the user. In a project with `.harness.json`, at session start, the Sync hooks generate
-the Git hooks it lists and, with `statusLine` on, install the plugin's Status line
-(branch, file counts, context and rate-limit usage) in `.claude/settings.local.json`. All hooks
-need `bun`.
+`git reset --hard`, `rm -rf /`…), commands that skip Git hooks (`--no-verify`), and tool calls
+that would Leak a Secret into Claude's context (`cat .env`, `printenv`, reading `~/.ssh/id_*`,
+`gh auth token`…), and leaves them to the user. In a project with `.harness.json`, at session
+start, the Sync hooks generate the Git hooks it lists and, with `statusLine` on, install the
+plugin's Status line (branch, file counts, context and rate-limit usage) in
+`.claude/settings.local.json`. All hooks need `bun`.
 
 `.harness.json` configures them. The Guard can block more commands but never fewer; each Git
 hook runs its entries in order, Built-in checks (`am:…`) or shell commands, until one fails;
@@ -33,8 +34,8 @@ hook runs its entries in order, Built-in checks (`am:…`) or shell commands, un
 
 The Git hooks go into `.git/hooks`, marked as the plugin's own; a Git hook already there is
 left alone. `am:linear-history` also sets `pull.rebase=true`. `am:no-secrets` stops a commit that
-adds an API key, token, private key or env file, naming where, not what; `am:allow-secret` on a
-line lets a false alarm through, and on an env file's first line, the file. For editor checks,
+adds an API key, token, private key or Env file, naming where, not what; `am:allow-secret` on a
+line lets a false alarm through, and on an Env file's first line, the file. For editor checks,
 set `$schema`
 to `https://raw.githubusercontent.com/andrewmolyuk/harness/main/plugins/am/harness.schema.json`.
 

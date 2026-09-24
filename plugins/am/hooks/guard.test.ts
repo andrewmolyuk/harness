@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { blocks, check, parse } from "./guard";
+import { blocks, check, leak, parse, secretFile } from "./guard";
 
 const HOOK = join(import.meta.dir, "guard.ts");
 
@@ -56,6 +56,9 @@ describe("check", () => {
     "git push --no-verify",
     "git merge --no-verify feature",
     "git -c core.hooksPath=/dev/null commit -m x",
+    "sed -i '' '1i\\\n# am:allow-secret' .env",
+    "echo '# am:allow-secret' | cat - app/.env.local > t && mv t app/.env.local",
+    "printf '# am:allow-secret\\n' >>prod.env",
   ];
   for (const command of blocked) {
     test(`blocks ${command}`, () => expect(check(command)).not.toBeNull());
@@ -85,10 +88,91 @@ describe("check", () => {
     "git commit -am x",
     "git push -n",
     "git -c user.name=x commit -m x",
+    "echo 'KEY = \"example\" // am:allow-secret' >> src/a.ts",
+    "cat .env.example",
   ];
   for (const command of allowed) {
     test(`allows ${command}`, () => expect(check(command)).toBeNull());
   }
+});
+
+describe("leak", () => {
+  const dir = mkdtempSync(join(tmpdir(), "guard-leak-"));
+  writeFileSync(join(dir, ".env"), "API_KEY=x\n");
+  writeFileSync(join(dir, "public.env"), "# defaults, am:allow-secret\nPORT=3000\n");
+
+  const leaking = [
+    "cat .env",
+    "head -n 5 app/.env.local",
+    "grep KEY .env",
+    "cat .envrc",
+    "grep -e x -- .env",
+    "while read l; do echo $l; done < .env",
+    "sort <.env",
+    "less ~/.ssh/id_ed25519",
+    "cat server.pem",
+    "cat ~/.aws/credentials",
+    "cat $HOME/.netrc",
+    "bash -c 'cat .env'",
+    "env",
+    "env -0",
+    "printenv",
+    "printenv GITHUB_TOKEN",
+    "export",
+    "export -p",
+    "declare -p DB_PASSWORD",
+    "set",
+    "echo $OPENAI_API_KEY",
+    'echo "token: ${GH_TOKEN}"',
+    "printf '%s' $STRIPE_SECRET",
+    "gh auth token",
+    "gh auth status --show-token",
+    "security find-generic-password -s x -w",
+    "aws configure get aws_secret_access_key",
+    "aws configure export-credentials",
+    "op read op://vault/item/password",
+    "git credential fill",
+  ];
+  for (const command of leaking) {
+    test(`blocks ${command}`, () => expect(leak(command, dir)).not.toBeNull());
+  }
+
+  const allowed = [
+    `grep -n '"prod.env", ".env.example"' src/a.ts`,
+    "rg 'x.env' src",
+    "cat .env.example",
+    "cat public.env",
+    "cp .env .env.bak",
+    "rm .env",
+    "cat ~/.ssh/id_ed25519.pub",
+    "env FOO=1 bun test",
+    "printenv HOME",
+    "export FOO=1",
+    "set -euo pipefail",
+    "echo $HOME $PATH $SSH_AUTH_SOCK",
+    "gh auth status",
+    "aws configure get region",
+    "git status",
+  ];
+  for (const command of allowed) {
+    test(`allows ${command}`, () => expect(leak(command, dir)).toBeNull());
+  }
+});
+
+describe("secretFile", () => {
+  test("names env, key and secret files, and passes the rest", () => {
+    expect(secretFile("/x/.env")).toBe("/x/.env is an env file");
+    expect(secretFile("id_rsa")).toBe("id_rsa holds a private key");
+    expect(secretFile("~/.config/gh/hosts.yml")).toBe("~/.config/gh/hosts.yml holds secrets");
+    expect(secretFile("src/env.ts")).toBeNull();
+    expect(secretFile("id_rsa.pub")).toBeNull();
+  });
+
+  test("counts an env file it can't read as unmarked", () => {
+    const dir = mkdtempSync(join(tmpdir(), "guard-unreadable-"));
+    mkdirSync(join(dir, ".env"));
+    expect(secretFile(".env", dir)).toBe(".env is an env file");
+  });
 });
 
 describe("blocks", () => {
@@ -150,6 +234,20 @@ describe("hook", () => {
     const { hookSpecificOutput } = JSON.parse(await run(input, project));
     expect(hookSpecificOutput.permissionDecisionReason).toContain("deletes pods");
     expect(await run(input)).toBe("");
+  });
+
+  test("denies a Leak, pointing the user to their own terminal, not `!`", async () => {
+    const reason = async (input: unknown) =>
+      JSON.parse(await run(input)).hookSpecificOutput.permissionDecisionReason as string;
+    const bash = await reason({ tool_name: "Bash", tool_input: { command: "printenv" } });
+    expect(bash).toContain("printenv prints every environment variable");
+    expect(bash).toContain("their own terminal, not with `!`");
+    const read = { tool_name: "Read", tool_input: { file_path: "/srv/app/.env" } };
+    expect(await reason(read)).toContain("/srv/app/.env is an env file");
+    const grep = { tool_name: "Grep", tool_input: { pattern: "x", glob: "*.pem" } };
+    expect(await reason(grep)).toContain("*.pem holds a private key");
+    const safe = { tool_name: "Read", tool_input: { file_path: "/srv/app/src/env.ts" } };
+    expect(await run(safe)).toBe("");
   });
 
   test("says nothing for a safe command", async () => {

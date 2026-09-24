@@ -81,11 +81,13 @@ describe("leaks", () => {
   });
 
   test("finds env files, even empty ones, but not their templates", () => {
-    for (const path of [".env", "app/.env.local", "prod.env", ".env.example", "env.ts"])
+    for (const path of [".env", "app/.env.local", "prod.env", ".envrc", ".env.example", "env.ts"])
       stage(path, "");
     const env = (p: string) =>
       `${p}: an env file; keep it out of git, or put am:allow-secret on its first line`;
-    expect(leaks(repo)).toEqual([env(".env"), env("app/.env.local"), env("prod.env")]);
+    expect(leaks(repo).sort()).toEqual(
+      [".env", ".envrc", "app/.env.local", "prod.env"].map(env).sort(),
+    );
   });
 
   test("passes an env file marked on its first line, and still scans its lines", () => {
