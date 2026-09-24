@@ -72,7 +72,23 @@ The marketplace is this GitHub repo's `main`; a local path or a git URL works to
 says where the plugin loads: `user`, the default, in every project; `project` in this one, for
 everyone who clones it (`.claude/settings.json`, committed); `local` in this one, only for you
 (`.claude/settings.local.json`). Inside a session, `/plugin` asks for the scope. Restart the
-session to load it, and run `/plugin marketplace update harness` to pick up a new version.
+session to load it.
+
+Only for you, in this project:
+
+```
+claude plugin marketplace add andrewmolyuk/harness
+claude plugin install am@harness --scope local
+```
+
+## Update
+
+```
+claude plugin marketplace update harness
+```
+
+or `/plugin marketplace update harness` inside a session, then restart the session; `/plugin`
+shows the installed version. It is the same whatever the scope.
 
 ## Develop
 
