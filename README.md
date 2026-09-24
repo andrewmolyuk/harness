@@ -69,16 +69,28 @@ claude plugin install am@harness --scope project
 ```
 
 The marketplace is this GitHub repo's `main`; a local path or a git URL works too. The scope
-says where the plugin loads: `user`, the default, in every project; `project` in this one, for
-everyone who clones it (`.claude/settings.json`, committed); `local` in this one, only for you
+says where the plugin loads: `user`, the default, in every project; `project` in this one
+(`.claude/settings.json`, committed); `local` in this one, only for you
 (`.claude/settings.local.json`). Inside a session, `/plugin` asks for the scope. Restart the
 session to load it.
 
-Only for you, in this project:
+Only for you, in this project, install with `--scope local` instead:
 
 ```
-claude plugin marketplace add andrewmolyuk/harness
 claude plugin install am@harness --scope local
+```
+
+For the whole team, commit both the marketplace and the plugin in the project's
+`.claude/settings.json`; whoever opens the project and trusts its folder is asked to install
+them:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "harness": { "source": { "source": "github", "repo": "andrewmolyuk/harness" } }
+  },
+  "enabledPlugins": { "am@harness": true }
+}
 ```
 
 ## Update
