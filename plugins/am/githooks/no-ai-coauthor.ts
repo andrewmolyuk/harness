@@ -1,5 +1,5 @@
 // Built-in check am:no-ai-coauthor (commit-msg): no Co-Authored-By trailer names an AI; human
-// co-authors pass. Copied into a project's hooks folder, so it imports nothing from the plugin.
+// co-authors pass.
 import { readFileSync } from "node:fs";
 
 // A person called Claude passes; Claude the model is named with a model, Code or its email.

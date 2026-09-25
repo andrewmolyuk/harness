@@ -1,7 +1,6 @@
 // Built-in check am:no-secrets (pre-commit): the staged changes add no API key, token or private
 // key, and no Env file. A line with `am:allow-secret` on it passes, and an Env file with it on its
-// first line. It reports where a Secret is, never the Secret. Copied into a project's hooks
-// folder, so it imports nothing from the plugin.
+// first line. It reports where a Secret is, never the Secret.
 import { spawnSync } from "node:child_process";
 
 // The first that matches names the Secret, so the more specific come first.

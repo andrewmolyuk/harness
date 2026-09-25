@@ -84,8 +84,9 @@ switch one on by changing its value:
 }
 ```
 
-The Git hooks go into the repo's Git hooks folder, marked as the plugin's own. A Git hook
-already there is left alone. `am:linear-history` also sets `pull.rebase=true`.
+The Git hooks go into the repo's Git hooks folder, marked as the plugin's own, and run the
+Built-in checks from the installed plugin. A Git hook already there is left alone.
+`am:linear-history` also sets `pull.rebase=true`.
 
 `am:no-secrets` stops a commit that adds an API key, token, private key or Env file, naming
 where, not what. To let a false alarm through, put `am:allow-secret` on the line; on an Env

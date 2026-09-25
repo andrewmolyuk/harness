@@ -1,6 +1,5 @@
 // Built-in check am:linear-history (pre-push): no merge commits among the commits being
 // pushed. Git passes `<local ref> <local sha> <remote ref> <remote sha>` lines on stdin.
-// Copied into a project's hooks folder, so it imports nothing from the plugin.
 import { spawnSync } from "node:child_process";
 
 const ZERO = /^0+$/;

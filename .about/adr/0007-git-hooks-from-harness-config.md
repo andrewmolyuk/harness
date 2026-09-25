@@ -1,7 +1,7 @@
 # Git hooks are generated from the harness config
 
-Status: accepted
-Date: 2026-09-24
+Status: superseded by 0020
+Date: 2026-09-25
 
 A project lists what each Git hook runs in `.harness.json`, under `gitHooks`: `pre-commit`,
 `commit-msg` and `pre-push` each take an ordered list of entries, either a Built-in check

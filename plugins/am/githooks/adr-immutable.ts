@@ -1,7 +1,7 @@
 // Built-in check am:adr-immutable (pre-commit): an ADR committed as accepted or superseded is
 // not edited, renamed or deleted; superseding an accepted one changes only its Status (to
 // `superseded by <number>`, an ADR that exists) and Date. ADRs outside .about/adr/ aren't
-// checked. Copied into a project's hooks folder, so it imports nothing from the plugin.
+// checked.
 import { spawnSync } from "node:child_process";
 
 const FOLDER = ".about/adr/";

@@ -1,13 +1,15 @@
 // Session start step: generate the Git hooks the Harness config's `gitHooks` lists into the
-// repo's hooks folder and copy the Built-in checks beside them (ADR 0007). It writes and
-// removes only hooks marked as its own; anything missing (git, a repo) means it does nothing.
+// repo's hooks folder, running the Built-in checks from this plugin version (ADR 0020). It writes
+// and removes only hooks marked as its own; anything missing (git, a repo) means it does nothing.
 import { spawnSync } from "node:child_process";
 import {
   chmodSync,
-  copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  rmdirSync,
+  rmSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -20,18 +22,22 @@ const CHECKS = join(import.meta.dir, "..", "githooks");
 const quote = (s: string) => `'${s.replaceAll("'", `'\\''`)}'`;
 
 // A Git hook that runs its entries in order and stops at the first failure. Each gets the
-// hook's arguments, and pre-push's stdin.
-export function script(hook: GitHook, entries: string[]): string {
+// hook's arguments, and pre-push's stdin. A Built-in check missing from `checks`, the plugin
+// updated or removed since the Sync, is skipped with a warning rather than failing the hook.
+export function script(hook: GitHook, entries: string[], checks = CHECKS): string {
   const stdin = hook === "pre-push";
   return [
     "#!/bin/sh",
     `${MARKER}: generated from .harness.json by the am plugin; edits are overwritten.`,
-    'am="$(dirname "$0")/am"',
+    `am=${quote(checks)}`,
     "check() {",
-    "  if command -v bun >/dev/null 2>&1; then",
-    '    name=$1; shift; bun "$am/$name.ts" "$@"',
+    "  name=$1; shift",
+    "  if ! command -v bun >/dev/null 2>&1; then",
+    '    echo "am: bun not found, skipped am:$name" >&2',
+    '  elif [ ! -f "$am/$name.ts" ]; then',
+    '    echo "am: am:$name not found, the am plugin was updated or removed; skipped" >&2',
     "  else",
-    '    echo "am: bun not found, skipped am:$1" >&2',
+    '    bun "$am/$name.ts" "$@"',
     "  fi",
     "}",
     ...(stdin ? ["input=$(cat)"] : []),
@@ -72,13 +78,17 @@ export function sync(dir: string, hooks?: Map<GitHook, string[]>): string[] {
       unlinkSync(file);
     }
   }
-  if (hooks.size) {
-    mkdirSync(join(folder, "am"), { recursive: true });
-    for (const name of Object.keys(BUILTINS))
-      copyFileSync(join(CHECKS, `${name}.ts`), join(folder, "am", `${name}.ts`));
-  }
+  removeCopies(join(folder, "am"));
   const linear = [...hooks.values()].some((e) => e.includes("am:linear-history"));
   if (linear && git(dir, "config", "--local", "pull.rebase").status !== 0)
     git(dir, "config", "--local", "pull.rebase", "true");
   return report;
+}
+
+// Removes the Built-in checks earlier versions copied into the hooks folder's am/, and am/ once
+// empty. The Git hooks that ran them were all just rewritten or removed.
+function removeCopies(dir: string) {
+  if (!existsSync(dir)) return;
+  for (const name of Object.keys(BUILTINS)) rmSync(join(dir, `${name}.ts`), { force: true });
+  if (!readdirSync(dir).length) rmdirSync(dir);
 }

@@ -1,8 +1,16 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import type { GitHook } from "../lib/config";
 import { script, sync } from "./git-hooks";
 
@@ -38,15 +46,31 @@ describe("sync", () => {
     expect(existsSync(join(dir, ".git"))).toBe(false);
   });
 
-  test("writes the listed Git hooks and copies the Built-in checks", () => {
+  test("writes the listed Git hooks, running the Built-in checks from the plugin", () => {
     expect(sync(repo, listed({ "commit-msg": ["am:conventional-commits"], "pre-push": [] })))
       .toEqual([]);
-    expect(readFileSync(hook("commit-msg"), "utf8")).toContain("# managed by am");
+    const written = readFileSync(hook("commit-msg"), "utf8");
+    expect(written).toContain("# managed by am");
+    expect(written).toContain(`am='${resolve(import.meta.dir, "..", "githooks")}'`);
     expect(statSync(hook("commit-msg")).mode & 0o111).toBeTruthy();
     expect(existsSync(hook("pre-push"))).toBe(true);
     expect(existsSync(hook("pre-commit"))).toBe(false);
-    expect(existsSync(hook("am/conventional-commits.ts"))).toBe(true);
-    expect(existsSync(hook("am/conventional-commits.test.ts"))).toBe(false);
+    expect(existsSync(hook("am"))).toBe(false);
+  });
+
+  test("removes the Built-in checks earlier versions copied, keeping other files", () => {
+    mkdirSync(hook("am"));
+    writeFileSync(hook("am/no-secrets.ts"), "");
+    expect(sync(repo)).toEqual([]);
+    expect(existsSync(hook("am/no-secrets.ts"))).toBe(true);
+    sync(repo, listed({}));
+    expect(existsSync(hook("am"))).toBe(false);
+    mkdirSync(hook("am"));
+    writeFileSync(hook("am/no-secrets.ts"), "");
+    writeFileSync(hook("am/mine.ts"), "");
+    sync(repo, listed({ "pre-commit": ["am:no-secrets"] }));
+    expect(existsSync(hook("am/no-secrets.ts"))).toBe(false);
+    expect(existsSync(hook("am/mine.ts"))).toBe(true);
   });
 
   test("removes its own Git hooks once no longer listed, and leaves them without a setting", () => {
@@ -84,5 +108,13 @@ describe("sync", () => {
       .not.toBe(0);
     expect(commit("feat: nope")).not.toBe(0);
     expect(commit("feat: ok")).toBe(0);
+  });
+
+  test("a Git hook skips a Built-in check the plugin no longer has, with a warning", () => {
+    writeFileSync(hook("commit-msg"), script("commit-msg", ["am:conventional-commits"], "/gone"));
+    chmodSync(hook("commit-msg"), 0o755);
+    const run = git("commit", "-q", "--allow-empty", "-m", "add stuff");
+    expect(run.status).toBe(0);
+    expect(run.stderr).toContain("am:conventional-commits not found");
   });
 });

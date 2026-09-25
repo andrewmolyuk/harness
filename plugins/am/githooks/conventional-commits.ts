@@ -1,8 +1,7 @@
 // Built-in check am:conventional-commits (commit-msg): the message follows Conventional Commits
 // 1.0.0 — a `type(scope)!: description` subject in any case, a body after a blank line, and a
 // breaking change footer as `BREAKING CHANGE: description`, in uppercase (its synonym
-// `BREAKING-CHANGE` too). Footers are the trailing paragraphs that open with one. Copied into
-// a project's hooks folder, so it imports nothing from the plugin.
+// `BREAKING-CHANGE` too). Footers are the trailing paragraphs that open with one.
 import { readFileSync } from "node:fs";
 
 const SUBJECT = /^[\p{L}\p{N}][\p{L}\p{N}-]*(\([^()\n]*[^()\s][^()\n]*\))?!?: \S/u;

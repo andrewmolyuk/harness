@@ -8,8 +8,7 @@
   is one the skill runs, with its test beside it.
 - `plugins/am/hooks/` — `hooks.json`, the hook scripts it runs, and the steps
   `session-start.ts` runs in order.
-- `plugins/am/githooks/` — Built-in checks, copied into a project's Git hooks folder: they
-  import nothing from the plugin.
+- `plugins/am/githooks/` — Built-in checks, run from here by a project's generated Git hooks.
 - `plugins/am/guidelines/` — the Guidelines: `index.md`, printed at session start, and the
   Guideline files it names.
 - `plugins/am/statusline/` — the Status line script the Sync points Claude Code at.
